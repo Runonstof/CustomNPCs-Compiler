@@ -12,6 +12,8 @@ class BabelRunner extends Plugin
     {
         if (!file_exists(BASEDIR . '/temp')) {
             mkdir(BASEDIR . '/temp');
+        } else {
+            rrmdir(BASEDIR . '/temp/');
         }
         $compiler->setBuildFolder('temp/');
         $compiler->console->output->pprint('#fBabel Runner enabled.');
@@ -22,7 +24,7 @@ class BabelRunner extends Plugin
         // $a = exec('npm run build', $b, $c);
         
         $compiler->console->output->pprint('#fRunning Babel for ES6 JavaScript features...');
-        // dump($a, $b, $c);
+        
         $cmd = 'npm run build';
         flush();
         $proc = popen($cmd, 'r');

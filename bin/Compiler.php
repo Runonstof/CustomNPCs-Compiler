@@ -19,6 +19,7 @@ class Compiler
 
     protected $scriptsFolder;
     protected $buildFolder;
+    protected $outputFolder;
 
 
     private $cache;
@@ -32,6 +33,7 @@ class Compiler
     {
         $this->scriptsFolder = realpath(__DIR__."\..\\") . "\scripts\\";
         $this->buildFolder = realpath(__DIR__ . '\..\\') . '\build\\';
+        $this->outputFolder = realpath(__DIR__ . '\..\\') . '\build\\';
         $this->files = new Collection($files);
         $this->language = $language ?? 'js';
         $this->outputFiles = $outputFiles ?? ['{FileDir}/{FileBaseName}'];
@@ -269,7 +271,7 @@ class Compiler
         $outputFiles = $this->getRelativeOutputPaths();
         
         foreach ($outputFiles as $outputFile) {
-            if (!file_exists($this->buildFolder . '\\' . $outputFile)) {
+            if (!file_exists($this->outputFolder . '\\' . $outputFile)) {
                 continue;
             }
             foreach ($copyPaths as $copyPath) {
@@ -284,7 +286,7 @@ class Compiler
                 }
 
                 // dd(realpath($this->buildFolder . $outputFile), $copyTo);
-                copy(realpath($this->buildFolder . $outputFile), $copyTo);
+                copy(realpath($this->outputFolder . $outputFile), $copyTo);
             }
         }
 

@@ -79,13 +79,14 @@ function kebabToCamel($string)
 }
 
 
-function strline($haystack, $needle, $startpos=0, $startline=1) {
+function strline($haystack, $needle, $startpos=0, $startline=1)
+{
     $lines = explode("\r\n", $haystack);
     $needles = explode("\r\n", $needle??'');
     foreach ($lines as $i => $line) {
-        if(strpos($line, $needles[0]) !== false) {
-            if(strpos($haystack, $needle) < $startpos
-            || $i+1 < $startline ) {
+        if (strpos($line, $needles[0]) !== false) {
+            if (strpos($haystack, $needle) < $startpos
+            || $i+1 < $startline) {
                 continue;
             }
 
@@ -94,4 +95,17 @@ function strline($haystack, $needle, $startpos=0, $startline=1) {
     }
 
     return false;
+}
+
+function rrmdir($path)
+{
+    $files = glob($path . '/*'); // get all file names
+    foreach ($files as $file) { // iterate files
+        if (is_file($file)) {
+            unlink($file);
+        } elseif (is_dir($file)) {
+            rrmdir($file);
+            rmdir($file);
+        }
+    }
 }

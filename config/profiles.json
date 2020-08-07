@@ -1,16 +1,15 @@
 {
-    "example": {
-        "files": [
-            "*.js"
-        ],
-        "copyTo": [
-            "D:/Programs/MultiMC/instances/Modpack/.minecraft/saves/New World/customnpcs/scripts/ecmascript",
-            "C:/Users/YourUsername/AppData/Roaming/.minecraft/saves/New World/customnpcs/scripts/ecmascript"
-        ]
-    },
     "folders": {
         "copyTo": [
-            "D:/Programs/MultiMC/instances/ModPack/.minecraft/saves/Test/customnpcs/scripts/ecmascript"
+            "D:/Programs/MultiMC/instances/AdventureCraft 2.0/.minecraft/saves/Test/customnpcs/scripts/ecmascript"
+        ]
+    },
+    "example": {
+        "files": [
+            "example.js"
+        ],
+        "profiles": [
+            "folders"
         ]
     },
     "players": {
@@ -29,17 +28,10 @@
             "folders"
         ]
     },
-    "items": {
+    "tempus": {
         "files": [
-            "items/*.js"
-        ],
-        "profiles": [
-            "folders"
-        ]
-    },
-    "blocks": {
-        "files": [
-            "blocks/*.js"
+            "npcs/Tempus*.js",
+            "players/Tempus*.js"
         ],
         "profiles": [
             "folders"

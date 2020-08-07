@@ -282,7 +282,7 @@ class Console
                         $this->output->pprint('#3-> #bNow do #e/noppes script reload#b in-game#3 <-', null);
                     }
                 }
-                
+                $status = 0;
                 
                 watch:
                 
@@ -335,7 +335,7 @@ class Console
                 }
 
                 $watchInit = true;
-                
+                clearstatcache();
                 if ($triggered) {
                     $this->output->clear();
                     foreach ($outputText as $outputLine) {

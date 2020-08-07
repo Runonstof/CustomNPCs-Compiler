@@ -1,5 +1,6 @@
-import field net.minecraft.enchantment.Enchantment.type as enchantmentType;
+
+var npcFullName = npc => npc.name + ' ' + npc.display.title;
 
 function interact(e) {
-    print(mcEnchantment.@enchantmentType);
+    e.npc.say(`My name is ${npcFullName(e.npc)}`);
 }
