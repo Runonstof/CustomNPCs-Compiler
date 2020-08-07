@@ -1,0 +1,9 @@
+<?php
+
+use App\Console;
+require './vendor/autoload.php';
+
+//define('BASEDIR', __DIR__);
+
+$app = new Console;
+$app->run();

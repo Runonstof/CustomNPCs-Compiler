@@ -1,0 +1,26 @@
+{
+  "name": "custom-server-tools",
+  "version": "1.0.0",
+  "description": "Custom NPCs Scripting Build Tool. Featuring the first MCP Deobfuscator for CustomNPCs scripting.",
+  "main": ".eslintrc.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.11.1",
+    "@babel/preset-env": "^7.11.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./node_modules/.bin/babel temp -d build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Runonstof/Custom-Server-Tools.git"
+  },
+  "author": "Runonstof",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Runonstof/Custom-Server-Tools/issues"
+  },
+  "homepage": "https://github.com/Runonstof/Custom-Server-Tools#readme"
+}

@@ -1,0 +1,48 @@
+{
+    "example": {
+        "files": [
+            "*.js"
+        ],
+        "copyTo": [
+            "D:/Programs/MultiMC/instances/Modpack/.minecraft/saves/New World/customnpcs/scripts/ecmascript",
+            "C:/Users/YourUsername/AppData/Roaming/.minecraft/saves/New World/customnpcs/scripts/ecmascript"
+        ]
+    },
+    "folders": {
+        "copyTo": [
+            "D:/Programs/MultiMC/instances/ModPack/.minecraft/saves/Test/customnpcs/scripts/ecmascript"
+        ]
+    },
+    "players": {
+        "files": [
+            "players/*.js"
+        ],
+        "profiles": [
+            "folders"
+        ]
+    },
+    "npcs": {
+        "files": [
+            "npcs/*.js"
+        ],
+        "profiles": [
+            "folders"
+        ]
+    },
+    "items": {
+        "files": [
+            "items/*.js"
+        ],
+        "profiles": [
+            "folders"
+        ]
+    },
+    "blocks": {
+        "files": [
+            "blocks/*.js"
+        ],
+        "profiles": [
+            "folders"
+        ]
+    }
+}

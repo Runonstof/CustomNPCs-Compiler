@@ -1,0 +1,6 @@
+/node_modules
+/vendor/
+.eslintrc.js
+debug.txt
+.console-history
+/temp/**
