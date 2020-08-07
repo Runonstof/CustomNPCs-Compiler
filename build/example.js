@@ -1,5 +1,8 @@
 "use strict";
 
+function testFunction() {//test function
+}
+
 var npcFullName = function npcFullName(npc) {
   return npc.name + ' ' + npc.display.title;
 };

@@ -1,3 +1,4 @@
+import importFile;
 
 var npcFullName = npc => npc.name + ' ' + npc.display.title;
 
