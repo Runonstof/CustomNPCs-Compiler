@@ -5,7 +5,7 @@
 set prefix=[33m[CNPC-Compiler][0m
 echo %prefix% Starting update
 echo %prefix% Updating compiler
-git fetch compiler master
+git pull compiler master
 echo %prefix% Compiler updated
 echo %prefix% Updating composer packages
 php composer.phar install
