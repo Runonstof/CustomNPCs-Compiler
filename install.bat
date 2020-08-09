@@ -15,7 +15,7 @@ if %useGit%==n goto gitn
 goto git
 :gity
 echo %prefix% Adding compiler as new Github upstream under name 'compiler'
-git remote add compiler https://github.com/Runonstof/CustomNPCs-Compiler.git
+git remote add compiler https://github.com/Runonstof/CustomNPCs-Compiler.git/master
 echo %prefix% Disabling pushing to upstream 'compiler'
 git remote set-url --push compiler DISABLE
 echo %prefix% Done! You can update the compiler anytime by doing [93mgit fetch compiler[0m or just [93mupdate[0m

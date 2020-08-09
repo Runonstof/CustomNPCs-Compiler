@@ -10,7 +10,7 @@ echo -e "Is this a Github Repository"
 read -p "And want to stay updated with compiler? (y/n): " useGit
 if [[ $useGit == "y" ]]; then
     echo -e "${PREFIX} Adding compiler as new Github upstream under name 'compiler'"
-    git remote add compiler https://github.com/Runonstof/CustomNPCs-Compiler.git
+    git remote add compiler https://github.com/Runonstof/CustomNPCs-Compiler.git/master
     echo -e "${PREFIX} Disabling pushing to upstream 'compiler'"
     git remote set-url --push compiler DISABLE
     echo -e "${PREFIX} Done! You can update the compiler anytime by doing \033[93mgit fetch compiler\033[0m or just \033[93mupdate\033[0m";
