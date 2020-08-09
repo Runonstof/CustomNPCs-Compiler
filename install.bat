@@ -1,7 +1,6 @@
 @echo off
 :: Compiler installation for Windows
 :: Execute using: install
-::
 set useGit=
 set prefix=[33m[Runon-Compiler][0m
 echo %prefix% Starting installation
@@ -9,8 +8,8 @@ php composer.phar install
 php composer.phar dumpautoload
 echo %prefix% Composer done.
 :git
-echo Is this a Github Repository
-set /p useGit=And want to stay updated with compiler? (y/n):
+echo [95mIs this a Github Repository and[0m
+set /p useGit=[95mdo you want to stay updated with compiler? (y/n):[0m 
 if %useGit%==y goto gity
 if %useGit%==n goto gitn
 goto git
