@@ -25,5 +25,14 @@ In order to use the compiler, you need to have the following requirements:
 4. **Zero PHP-Programming knowledge, only the compiler is written with it.**
 
 ### Installing
-Fork this project or download it as ZIP.
-The advantage of forking is that you can stay updated when the compiler updates.
+Download this project as ZIP.    
+If you fork it you cannot make your repo private, if you do make it private you cannot `git pull` updates from this repository anymore.    
+To fix this, download as ZIP, make a new private repo and paste it in.
+
+Run `install`*(Windows)* or `./install.sh`*(Mac/Linux)* inside your terminal of choice and it will ask you to stay updated, answer with `y`.    
+Now you can do `git fetch compiler` or `git pull compiler` to update compiler. *(Not recommended, use update-command below)*
+
+### Updating the compiler
+Run `update`*(Windows)* or `./update.sh`*(Max/Linux)* inside your terminal of choice.    
+This is the recommended way of updating compiler, as the compiler can include new npm/composer packages, these will get installed then too.
+
