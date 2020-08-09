@@ -1,7 +1,14 @@
 # CustomNPCs-Compiler
 A powerful CustomNPC scripting framework to create advanced scripts very easy and efficiently.
+This compiler is custom tailored for Custom NPCs Scripting for 1.12.2    
 
+---
 
+**Feel free to create issues or pull requests.**
+
+---
+
+## Summary
 ##### Tired of...
  - Copying same pieces of code across multiple scripts?
  - Manually searching and deobfuscating Minecraft's Obfuscated methods?
@@ -13,6 +20,10 @@ A powerful CustomNPC scripting framework to create advanced scripts very easy an
  - write obfuscated Minecraft methods in a normal way.
  - write in ES6+ JavaScript, because this compiler has Babel integrated. This will get transpiled down to valid, runnable ES5 JavaScript.
  - use alphabetical names for gui ids.
+
+
+This compiler is special made for Custom NPCs Scripting with JavaScript.    
+It aims to take away alot of the frustrations we have to encounter, like manually deobfuscating functions. 
 
 
 ## Installation & Setup
@@ -35,4 +46,6 @@ Now you can do `git fetch compiler` or `git pull compiler` to update compiler. *
 ### Updating the compiler
 Run `update`*(Windows)* or `./update.sh`*(Max/Linux)* inside your terminal of choice.    
 This is the recommended way of updating compiler, as the compiler can include new npm/composer packages, these will get installed then too.
+
+
 
