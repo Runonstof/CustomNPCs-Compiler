@@ -17,5 +17,6 @@ if [[ $useGit == "y" ]]; then
 else
     echo -e "${PREFIX} Skipped git upstream initialization"
 fi
+# ln -sf ./lib ./src/lib
 npm install
 echo -e "${PREFIX} Custom NPCs Compiler successfully installed."
