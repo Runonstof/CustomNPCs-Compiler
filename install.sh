@@ -1,7 +1,7 @@
 #!/bin/bash
 # Compiler installation for Mac and Linux
 # execute using: ./install.sh
-PREFIX=\033[0;33m[Runon-Compiler]\033[0m
+PREFIX="\033[0;33m[Runon-Compiler]\033[0m"
 echo -e "${PREFIX} Starting installation"
 php composer.phar install
 php composer.phar dumpautoload
@@ -14,7 +14,8 @@ if [ "$setGit" = "y" ]; then
     echo -e "${PREFIX} Disabling pushing to upstream 'compiler'"
     git remote set-url --push compiler DISABLE
     echo -e "${PREFIX} Done! You can update the compiler anytime by doing \033[93mgit fetch compiler\033[0m or just \033[93mupdate\033[0m";
-
+else
+    echo -e "${PREFIX} Skipped git upstream initialization"
 fi
 npm install
 echo -e "${PREFIX} Custom NPCs Compiler successfully installed."
