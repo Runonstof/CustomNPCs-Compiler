@@ -18,7 +18,7 @@ echo %prefix% Adding compiler as new Github upstream under name 'compiler'
 git remote add compiler https://github.com/Runonstof/CustomNPCs-Compiler.git/master
 echo %prefix% Disabling pushing to upstream 'compiler'
 git remote set-url --push compiler DISABLE
-echo %prefix% Done! You can update the compiler anytime by doing [93mgit fetch compiler[0m or just [93mupdate[0m
+echo %prefix% Done! You can update the compiler anytime by doing [93mgit fetch compiler master[0m or just [93mupdate[0m
 goto gitafter
 :gitn
 echo %prefix% Skipped git upstream initialization

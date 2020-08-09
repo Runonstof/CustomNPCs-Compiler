@@ -13,7 +13,7 @@ if [[ $useGit == "y" ]]; then
     git remote add compiler https://github.com/Runonstof/CustomNPCs-Compiler.git/master
     echo -e "${PREFIX} Disabling pushing to upstream 'compiler'"
     git remote set-url --push compiler DISABLE
-    echo -e "${PREFIX} Done! You can update the compiler anytime by doing \033[93mgit fetch compiler\033[0m or just \033[93mupdate\033[0m";
+    echo -e "${PREFIX} Done! You can update the compiler anytime by doing \033[93mgit fetch compiler master\033[0m or just \033[93mupdate\033[0m";
 else
     echo -e "${PREFIX} Skipped git upstream initialization"
 fi

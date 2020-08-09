@@ -4,7 +4,7 @@
 PREFIX="\033[0;33m[CNPC-Compiler]\033[0m"
 echo -e "${PREFIX} Starting update"
 echo -e "${PREFIX} Updating compiler"
-git fetch compiler
+git fetch compiler master
 echo -e "${PREFIX} Compiler updated"
 echo -e "${PREFIX} Updating composer packages"
 php composer.phar install
