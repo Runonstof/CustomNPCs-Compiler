@@ -2,7 +2,7 @@
 :: Compiler installation for Windows
 :: Execute using: install
 set useGit=
-set prefix=[33m[Runon-Compiler][0m
+set prefix=[33m[CNPC-Compiler][0m
 echo %prefix% Starting installation
 php composer.phar install
 php composer.phar dumpautoload

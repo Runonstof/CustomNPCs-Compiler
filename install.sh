@@ -1,7 +1,7 @@
 #!/bin/bash
 # Compiler installation for Mac and Linux
 # execute using: ./install.sh
-PREFIX="\033[0;33m[Runon-Compiler]\033[0m"
+PREFIX="\033[0;33m[CNPC-Compiler]\033[0m"
 echo -e "${PREFIX} Starting installation"
 php composer.phar install
 php composer.phar dumpautoload

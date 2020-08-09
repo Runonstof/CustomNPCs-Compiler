@@ -2,7 +2,7 @@
 :: Compiler updater for windows
 :: Execute using: update
 
-set prefix=[33m[Runon-Compiler][0m
+set prefix=[33m[CNPC-Compiler][0m
 echo %prefix% Starting update
 echo %prefix% Updating compiler
 git fetch compiler

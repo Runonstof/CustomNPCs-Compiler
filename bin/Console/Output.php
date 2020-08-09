@@ -141,6 +141,6 @@ class Output
         ];
 
         $text = is_null($level) ? '' : $levels[$level] ?? '';
-        $this->print('#6[Runon-Compiler]' . $text . ' #r' . $string);
+        $this->print('#6[CNPC-Compiler]' . $text . ' #r' . $string);
     }
 }
