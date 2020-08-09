@@ -8,6 +8,7 @@ php composer.phar dumpautoload
 echo -e "${PREFIX} Composer done."
 echo -e "Is this a Github Repository"
 read -p "And want to stay updated with compiler? (y/n): " useGit
+echo -e "USING: '${useGit}'"
 if [ "$setGit" = "y" ]; then
     echo -e "${PREFIX} Adding compiler as new Github upstream under name 'compiler'"
     git remote add compiler https://github.com/Runonstof/CustomNPCs-Compiler.git
