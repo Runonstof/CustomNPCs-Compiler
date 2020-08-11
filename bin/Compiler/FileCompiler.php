@@ -7,6 +7,9 @@ use Tightenco\Collect\Support\Collection;
 
 class FileCompiler
 {
+    private static $libraries = null;
+    private static $libraryCache = [];
+    
     private $filePath;
     public $content;
     private $original;
@@ -164,9 +167,12 @@ class FileCompiler
 
         preg_match_all($importRgx, $this->content, $matches);
 
+        $libs = $this->getLibraries()->{$this->language} ?? null;
+
         $imports = new Collection;
         foreach ($matches[0] as $i=>$match) {
             $rawPath = $matches[2][$i] ?: $matches[3][$i];
+            $importPath = $rawPath;
             if (empty($matches[2][$i])) {
                 $rawPath = str_replace('.', '/', $rawPath) . '.js';
             }
@@ -178,10 +184,27 @@ class FileCompiler
             $relativeFilePaths = collect($rawFiles)->map(function ($rawFile) {
                 return str_replace(realpath(__DIR__ . '\..\..\\') . '\\', '', $rawFile);
             })->toArray();
+            
+            if ($libs) {
+                if ($lib = ($libs->{$importPath} ?? false)) {
+                    $libModules = explode(',', trim($matches[1][$i]));
+                    foreach ($libModules as $libModuleName) {
+                        if (!isset($lib->{$libModuleName})) {
+                            continue;
+                        }
+                        $libModuleUrl = $lib->{$libModuleName};
+                        $libModulePath = $this->loadLibrary($importPath, $libModuleName, $libModuleUrl);
+
+                        $rawFiles[] = $libModulePath;
+                    }
+                }
+            }
     
             $import = new \stdClass;
             $import->statement = $match;
             $import->modules = $matches[1][$i];
+            $import->importPath = $importPath;
+            $import->rawPath = $rawPath;
             $import->filePaths = $rawFiles;
             $import->relativeFilePaths = $relativeFilePaths;
             $import->payload = is_json($matches[4][$i]) ? json_decode($matches[4][$i]) : [];
@@ -190,7 +213,6 @@ class FileCompiler
     
             $imports->push($import);
         }
-
 
         return $imports;
     }
@@ -324,7 +346,6 @@ class FileCompiler
                             })
                             ->where('file', $importFile->getFilePath())
                             ->first();
-
                         if ($module) {
                             if (!empty(preg_replace('/\w+/', '', $importAlias))) {
                                 $importAlias = $module->name;
@@ -478,5 +499,33 @@ class FileCompiler
     public function getPlugins()
     {
         return $this->plugins;
+    }
+
+    public function getLibraries()
+    {
+        if (is_null(self::$libraries)) {
+            self::$libraries = json_decode(file_get_contents(BASEDIR . DIRECTORY_SEPARATOR . 'config/libraries.json'));
+        }
+        return self::$libraries;
+    }
+
+    public function loadLibrary($importPath, $module, $url)
+    {
+        $importPath = str_replace('.', '_', $importPath);
+        if (!isset(self::$libraryCache[$importPath])) {
+            self::$libraryCache[$importPath] = [];
+        }
+        if (!isset(self::$libraryCache[$importPath][$module])) {
+            $sep = DIRECTORY_SEPARATOR;
+            $putDir = BASEDIR . "{$sep}lib$sep" . $importPath . $sep;
+            $putFile = $putDir . $module . "." . $this->language;
+
+            if (!file_exists($putFile)) {
+                mkpath($putDir);
+                file_put_contents($putFile, file_get_contents($url));
+            }
+            self::$libraryCache[$importPath][$module] = $putFile;
+        }
+        return self::$libraryCache[$importPath][$module];
     }
 }
