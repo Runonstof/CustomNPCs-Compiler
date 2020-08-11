@@ -188,7 +188,9 @@ class FileCompiler
             if ($libs) {
                 if ($lib = ($libs->{$importPath} ?? false)) {
                     $libModules = explode(',', trim($matches[1][$i]));
+                    
                     foreach ($libModules as $libModuleName) {
+                        $libModuleName = trim($libModuleName);
                         if (!isset($lib->{$libModuleName})) {
                             continue;
                         }
@@ -504,14 +506,18 @@ class FileCompiler
     public function getLibraries()
     {
         if (is_null(self::$libraries)) {
-            self::$libraries = json_decode(file_get_contents(BASEDIR . DIRECTORY_SEPARATOR . 'config/libraries.json'));
+            $libs = require BASEDIR . DIRECTORY_SEPARATOR . 'config/libraries.php';
+            $libs = array_merge_recursive($libs, json_decode(file_get_contents(BASEDIR . DIRECTORY_SEPARATOR . 'config/libraries.json'), true));
+
+            self::$libraries = array_to_object($libs);
         }
+
         return self::$libraries;
     }
 
     public function loadLibrary($importPath, $module, $url)
     {
-        $importPath = str_replace('.', '_', $importPath);
+        $importPath = str_replace('.', '/', $importPath);
         if (!isset(self::$libraryCache[$importPath])) {
             self::$libraryCache[$importPath] = [];
         }
