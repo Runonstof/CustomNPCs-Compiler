@@ -119,5 +119,22 @@ class MCPDecompiler extends Plugin
                 }
             }
         }
+
+        $rgxMcpGetShort = syntax($this->language)->get('decompMCPGetShort');
+
+        preg_match_all($rgxMcpGetShort, $fileCompiler->content, $matches);
+
+        foreach ($matches[0] as $i=>$mcpImportGet) {
+            $mcpImportGetAlias = $matches[1][$i];
+            $decomped = self::$mcpImportCache->where('alias', $mcpImportGetAlias)->first();
+
+            if ($decomped) {
+                $decompedItem = self::getMCP($decomped->type, $decomped->namespace);
+
+                if ($decompedItem) {
+                    $fileCompiler->content = str_replace($mcpImportGet, $decompedItem, $fileCompiler->content);
+                }
+            }
+        }
     }
 }

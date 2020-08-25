@@ -12,6 +12,9 @@ class Importer
 {
     private $input;
     private $output;
+    private $repos = [
+        'www.ronanstoffers.nl/api/customnpcs-compiler/repo.json'
+    ];
 
     public function __construct()
     {
@@ -20,7 +23,7 @@ class Importer
 
         $this->input->mergeOptions([
             ['option' => 'package::', 'name'=>'package', 'type' => 'string'],
-            ['option' => 'version::', 'name'=> 'version', 'type' => 'string'],
+            ['option' => 'version::', 'name'=> 'version', 'type' => 'string', 'default' => 'latest'],
             ['option' => 'remove::', 'name'=> 'remove', 'type' => 'bool']
         ]);
     }

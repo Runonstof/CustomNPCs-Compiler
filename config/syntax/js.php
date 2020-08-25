@@ -13,7 +13,8 @@ return [
     //=== Decompiler regex
     'decompMCP' => '/import\s+(method|field)\s+([\w\.]+)\s+as\s+([\w]+)\s*;\s*/',
     'decompMCPGet' => '/\.@([\w]+)/',
-
+    'decompMCPGetShort' => '/@@([\w]+)/',
+    
     //==Gui ID Reserver
     'guiIdFunc' => '/@(id\([\w\s\W]+?\))\$/',
 
