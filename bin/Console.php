@@ -14,6 +14,8 @@ class Console
     private $input;
     public $output;
 
+    //Hello world
+
     protected $doCliOutput = true;
 
     public function __construct()

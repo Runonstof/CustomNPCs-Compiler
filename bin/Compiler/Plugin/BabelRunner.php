@@ -15,7 +15,7 @@ class BabelRunner extends Plugin
         } else {
             rrmdir(BASEDIR . '/temp/');
         }
-        $compiler->setBuildFolder('temp/');
+        $compiler->setBuildFolder('temp' . DIRECTORY_SEPARATOR);
         $compiler->console->output->pprint('#fBabel Runner enabled.');
     }
 
