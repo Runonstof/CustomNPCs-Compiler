@@ -76,6 +76,8 @@ class MCPDecompiler extends Plugin
     public function run(FileCompiler $fileCompiler)
     {
         self::init();
+        $this->event('run');
+        
         $rgxMcp = syntax($this->language)->get('decompMCP');
 
         preg_match_all($rgxMcp, $fileCompiler->content, $matches);

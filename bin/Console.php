@@ -14,8 +14,6 @@ class Console
     private $input;
     public $output;
 
-    //Hello world
-
     protected $doCliOutput = true;
 
     public function __construct()
@@ -28,21 +26,23 @@ class Console
             $this->profiles->put($name, (object) $profile);
         }
     
-        $this->input->options->add(['option' => 'files::', 'name' => 'files', 'type' => 'array']);
-        $this->input->options->add(['option' => 'output::', 'name' => 'output', 'type' => 'array']);
-        $this->input->options->add(['option' => 'profile::', 'name' => 'profile', 'type' => 'string']);
-        $this->input->options->add(['option' => 'syntax::', 'name' => 'syntax', 'type' => 'string', 'default' => 'js']);
-        $this->input->options->add(['option' => 'console::', 'name' => 'console', 'type' => 'bool']);
-        $this->input->options->add(['option' => 'watch::', 'name' => 'watch', 'type' => 'bool']);
-        $this->input->options->add(['option' => 'no-output::', 'name' => 'no-output', 'type' => 'bool']);
-        $this->input->options->add(['option' => 'copy-to::', 'name' => 'copy-to', 'type' => 'array']);
-        $this->input->options->add(['option' => 'verbose::', 'name' => 'verbose', 'type' => 'bool']);
-        $this->input->options->add(['option' => 'tree::', 'name' => 'tree', 'type' => 'int', 'default' => -1]);
-        $this->input->options->add(['option' => 'minify::', 'name' => 'minify', 'type' => 'bool']);
-        $this->input->options->add(['option' => 'obfuscate::', 'name' => 'obfuscate', 'type' => 'bool']);
-        $this->input->options->add(['option' => 'source-comments::', 'name' => 'source-comments', 'type' => 'bool']);
-        $this->input->options->add(['option' => 'pre-run-script::', 'name' => 'pre-run-script', 'type' => 'string', 'default' => null]);
-        $this->input->options->add(['option' => 'with::', 'name' => 'with', 'type' => 'json', 'default' => null]);
+        $this->input->options
+            ->add(['option' => 'files::', 'name' => 'files', 'type' => 'array'])
+            ->add(['option' => 'output::', 'name' => 'output', 'type' => 'array'])
+            ->add(['option' => 'profile::', 'name' => 'profile', 'type' => 'string'])
+            ->add(['option' => 'syntax::', 'name' => 'syntax', 'type' => 'string', 'default' => 'js'])
+            ->add(['option' => 'console::', 'name' => 'console', 'type' => 'bool'])
+            ->add(['option' => 'watch::', 'name' => 'watch', 'type' => 'bool'])
+            ->add(['option' => 'no-output::', 'name' => 'no-output', 'type' => 'bool'])
+            ->add(['option' => 'copy-to::', 'name' => 'copy-to', 'type' => 'array'])
+            ->add(['option' => 'verbose::', 'name' => 'verbose', 'type' => 'bool'])
+            ->add(['option' => 'tree::', 'name' => 'tree', 'type' => 'int', 'default' => -1])
+            ->add(['option' => 'minify::', 'name' => 'minify', 'type' => 'bool'])
+            ->add(['option' => 'obfuscate::', 'name' => 'obfuscate', 'type' => 'bool'])
+            ->add(['option' => 'source-comments::', 'name' => 'source-comments', 'type' => 'bool'])
+            ->add(['option' => 'pre-run-script::', 'name' => 'pre-run-script', 'type' => 'string', 'default' => null])
+            ->add(['option' => 'with::', 'name' => 'with', 'type' => 'json', 'default' => null])
+        ;
     }
 
     public function validateOptions($options)

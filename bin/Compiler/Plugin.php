@@ -4,7 +4,7 @@ namespace App\Compiler;
 
 use App\Console\Output;
 
-class Plugin
+abstract class Plugin implements IPlugin
 {
     public $language;
     public Output $output;
@@ -24,5 +24,10 @@ class Plugin
         }
 
         return $plugins;
+    }
+
+    public function event($event, &$bus = [])
+    {
+        //Todo initiate Event Bus
     }
 }
