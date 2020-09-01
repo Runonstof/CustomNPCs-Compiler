@@ -304,7 +304,7 @@ class FileCompiler
                                 $moduleContent = preg_replace('/__\$/m', $module->constructor, $moduleContent);
                                 $moduleContent = preg_replace('/function\s+(_\$)/m', 'function ' . $importAlias, $moduleContent);
                                 $moduleContent = preg_replace('/_\$/m', $importAlias, $moduleContent);
-                                $importContent .= "\n" . $moduleContent;
+                                $importContent = $moduleContent . "\n" . $importContent;
                                 $imported[$filePath]->modules[] = $importModuleStatement;
                             }
                         }
@@ -356,7 +356,7 @@ class FileCompiler
                             $moduleContent = preg_replace('/__\$/m', $module->constructor, $moduleContent);
                             $moduleContent = preg_replace('/function (_\$)/m', 'function ' . $importAlias, $moduleContent);
                             $moduleContent = preg_replace('/(_\$)/m', $importAlias, $moduleContent);
-                            $importContent .= "\n" . $moduleContent;
+                            $importContent = $moduleContent . "\n" . $importContent;
                             
                             $importCached->modules[] = $importModuleStatement;
                         }
