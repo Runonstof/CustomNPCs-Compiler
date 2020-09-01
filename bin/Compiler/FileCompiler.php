@@ -301,6 +301,7 @@ class FileCompiler
                                     $importAlias = $module->name;
                                 }
                                 $moduleContent = $module->innerContent;
+                                $moduleContent = preg_replace('/_@\$/m', $importAlias, $moduleContent);
                                 $moduleContent = preg_replace('/__\$/m', $module->constructor, $moduleContent);
                                 $moduleContent = preg_replace('/function\s+(_\$)/m', 'function ' . $importAlias, $moduleContent);
                                 $moduleContent = preg_replace('/_\$/m', $importAlias, $moduleContent);
@@ -353,6 +354,7 @@ class FileCompiler
                                 $importAlias = $module->name;
                             }
                             $moduleContent = $module->innerContent;
+                            $moduleContent = preg_replace('/_@\$/m', $importAlias, $moduleContent);
                             $moduleContent = preg_replace('/__\$/m', $module->constructor, $moduleContent);
                             $moduleContent = preg_replace('/function (_\$)/m', 'function ' . $importAlias, $moduleContent);
                             $moduleContent = preg_replace('/(_\$)/m', $importAlias, $moduleContent);
