@@ -1,4 +1,7 @@
 # CustomNPCs-Compiler
+
+[CheatSheet](https://gist.github.com/RunonScripts/711b43d72ebd490fccdc92bb08800d4c)
+
 A powerful CustomNPC scripting framework to create advanced scripts very easy and efficiently.
 This compiler is custom tailored for Custom NPCs Scripting for 1.12.2    
 
