@@ -19,5 +19,5 @@ return [
     'guiIdFunc' => '/@(id\([\w\s\W]+?\))\$/',
 
     //JSModules
-    'defineModule' => '/@module\s+(?:function\s+)?([\w\W]+?)(?:\(([\w\W]*?)\)(?:\s*:\s*[\w\S\s]+?)?)?(?:\s+requires\s+{([\s\S]*?)})?\;([\w\W\r\n]+?)@endmodule(?:\s+\1+)?;/'
+    'defineModule' => '/@module\s+(?:function\s+|class\s+)?([\w\W]+?)(?:\(([\w\W]*?)\)(?:\s*:\s*[\w\S\s]+?)?)?(?:\s+requires\s+{([\s\S]*?)})?\;([\w\W\r\n]+?)@endmodule(?:\s+\1+)?;/'
 ];
