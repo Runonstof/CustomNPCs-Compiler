@@ -9,6 +9,9 @@ return [
     'annotations' => '/@([\w]+)(?:\(([\s\S]+)\))?;/',
     'functionTweak' => '/function(?:\s+([\w]+))?\s*\(([\w\S\s]*?)\)[\s]*{/',
     'functionTweakArgs' => '/([\w]+)(?:[\s]*=[\s]*([\w\S]+)(?:\s*,|\s*$))?/',
+    
+    //=== Java Importer
+    'javaImport' => '/^(?!\/\/\s*)import\s+java\s+([\$\w\.]+)(?:\s+as\s+(\w+))?\s*;/m',
 
     //=== Decompiler regex
     'decompMCPMulti' => '/^(?!\/\/\s*)import\s+((?:method|field)s?)\s*{([\s\S]*?)}\s*from\s+([\$\w\.]+)(?:\s+as\s+(\w+))?\s*;\s*/m',

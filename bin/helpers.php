@@ -124,3 +124,7 @@ function array_to_object($array)
     }
     return $obj;
 }
+
+function array_value_last($array) {
+    return empty($array) ? null : $array[array_key_last($array)];
+}
