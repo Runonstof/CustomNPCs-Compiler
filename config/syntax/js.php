@@ -11,7 +11,8 @@ return [
     'functionTweakArgs' => '/([\w]+)(?:[\s]*=[\s]*([\w\S]+)(?:\s*,|\s*$))?/',
 
     //=== Decompiler regex
-    'decompMCP' => '/import\s+(method|field)\s+([\w\.]+)\s+as\s+([\w]+)\s*;\s*/',
+    'decompMCPMulti' => '/^(?!\/\/\s*)import\s+((?:method|field)s?)\s*{([\s\S]*?)}\s*from\s+([\$\w\.]+)(?:\s+as\s+(\w+))?\s*;\s*/m',
+    'decompMCP' => '/^(?!\/\/\s*)import\s+(method|field)\s+([\$\w\.]+)\s+as\s+([\w]+)\s*;\s*/',
     'decompMCPGet' => '/\.@([\w]+)/',
     'decompMCPGetShort' => '/@@([\w]+)/',
     

@@ -77,10 +77,49 @@ class MCPDecompiler extends Plugin
     {
         self::init();
         $this->event('run');
+
+        $rgxMcpMulti = syntax($this->language)->get('decompMCPMulti');
+        
+        preg_match_all($rgxMcpMulti, $fileCompiler->content, $matches);
+
+      
+        foreach($matches[0] as $i=>$mcpImport) {
+            $mcpType = str_starts_with($matches[1][$i], 'method') ? 'method' : 'field';
+            $mcpArgs = explode(',', trim($matches[2][$i]));
+            $mcpNamespace = trim($matches[3][$i]);
+            $mcpNamespaceAlias = trim($matches[4][$i]);
+            if(!empty($mcpNamespaceAlias)) {
+                $mcpNamespaceAlias .= '_';
+            }
+
+            foreach($mcpArgs as $mcpArg) {
+                $mcpArg = trim($mcpArg);
+                $mcpArgInfo = preg_split('/\s+as\s+/', $mcpArg);
+                $mcpArgName = $mcpArgInfo[0];
+                $mcpArgAlias = $mcpArgInfo[1] ?? $mcpArgName;
+                
+                self::$mcpImportCache->push($dd = (object)[
+                    'type' => $mcpType,
+                    'namespace' => $mcpNamespace . '.' . $mcpArgName,
+                    'alias' => $mcpNamespaceAlias . $mcpArgAlias,
+                    'import' => $mcpImport
+                ]);
+
+                // dump($dd);
+
+            }
+            // dd($mcpArgs);
+            // dump(compact('mcpType', 'mcpArgs', 'mcpNamespace', 'mcpNamespaceAlias'),"==========");
+            $fileCompiler->content = str_replace($mcpImport, '', $fileCompiler->content);
+        
+        }
+        // dd('end');
+        // dd($matches);
         
         $rgxMcp = syntax($this->language)->get('decompMCP');
 
         preg_match_all($rgxMcp, $fileCompiler->content, $matches);
+        
         
         foreach ($matches[0] as $i=>$mcpImport) {
             $mcpType = $matches[1][$i];
@@ -92,14 +131,14 @@ class MCPDecompiler extends Plugin
                 ->where('namespace', $mcpNamespace)
                 ->where('alias', $mcpAlias)
                 ->first();
-
             if (!$cached) {
-                self::$mcpImportCache->push((object)[
+                self::$mcpImportCache->push($dd = (object)[
                     'type' => $mcpType,
                     'namespace' => $mcpNamespace,
                     'alias' => $mcpAlias,
                     'import' => $mcpImport
                 ]);
+                // dd($dd);
             }
 
             $fileCompiler->content = str_replace($mcpImport, '', $fileCompiler->content);

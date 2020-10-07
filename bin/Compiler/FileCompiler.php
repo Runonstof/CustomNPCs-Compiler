@@ -339,7 +339,7 @@ class FileCompiler
                         if (in_array($importModuleStatement, $importCached->modules)) {
                             continue;
                         }
-                        $importAlias = preg_replace('/.+?\s+as\s+([\w\W]+?)/', '$1', $importModule);
+                        $importAlias = preg_replace('/.+?\s+as\s+([\w\W]+)/', '$1', $importModule);
                         $importModule = preg_replace('/(.+?)\s+as\s+[\w\W]+/', '$1', $importModule);
                         
                         
