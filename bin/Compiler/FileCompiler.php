@@ -333,6 +333,7 @@ class FileCompiler
                     $content = $importFile->content;
                     $import->modules = $import->modules ?: $importFile->scanModules('original')->pluck('name')->join(',');
 
+                    $importContent .= $sourceCommentLine . $content . $sourceCommentEndLine;
                     foreach (explode(',', $import->modules) as $importModule) {
                         $importModule = trim($importModule);
                         $importModuleStatement = $importModule;
@@ -363,8 +364,6 @@ class FileCompiler
                             $importCached->modules[] = $importModuleStatement;
                         }
                     }
-    
-                    $importContent .= $sourceCommentLine . $content . $sourceCommentEndLine;
                 }
             }
 
