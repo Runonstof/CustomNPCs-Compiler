@@ -145,10 +145,14 @@ class Console
             $cmd = readline(" >>> ");
             readline_add_history($cmd); //Adds last command to history so you can use up-arrow-key to navigate to history
             readline_write_history('.console-history');
-            $cmdOutput = @eval("return $cmd;");
-
-            if ($this->doCliOutput) {
-                dump($cmdOutput);
+            try {
+                $cmdOutput = @eval("return $cmd;");
+    
+                if ($this->doCliOutput) {
+                    dump($cmdOutput);
+                }
+            } catch(\ParseError $exc) {
+                $this->output->print(print_r($exc->getMessage()));
             }
 
             goto console;
