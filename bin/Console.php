@@ -135,7 +135,6 @@ class Console
             $compiler->addPlugins($options->plugins??[]);
 
             $f = $compiler->getFileCompilers();
-
             //Pre run console scripts for debugging the compiler
             if (!empty($options->preRunScript)) {
                 include __DIR__ . '/../config/console/' . $options->preRunScript.'.php';
