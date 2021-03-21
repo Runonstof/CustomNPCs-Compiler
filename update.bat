@@ -9,5 +9,6 @@ git pull compiler master
 echo %prefix% Compiler updated
 echo %prefix% Updating composer packages
 php composer.phar install
+php composer.phar dump-autoload
 echo %prefix% Updating npm packages
 npm install
