@@ -9,30 +9,30 @@ function is_json($string)
     return json_last_error() === JSON_ERROR_NONE;
 }
 
-function to_object($array, $recursive=true)
+function to_object($array, $recursive = true)
 {
     $obj = new stdClass;
-    foreach ($array as $key=>$value) {
+    foreach ($array as $key => $value) {
         $obj->{$key} = is_array($value) && $recursive ? to_object($value) : $value;
     }
 
     return $obj;
 }
 
-function syntax($lang=null)
+function syntax($lang = null)
 {
     return new SyntaxHelper($lang);
 }
 
 function debug($string)
 {
-    $debugFile = __DIR__."\..\debug.txt";
-    file_put_contents($debugFile, file_get_contents($debugFile)."\n".$string);
+    $debugFile = __DIR__ . "\..\debug.txt";
+    file_put_contents($debugFile, file_get_contents($debugFile) . "\n" . $string);
 }
 
 function debug_clear()
 {
-    $debugFile = __DIR__."\..\debug.txt";
+    $debugFile = __DIR__ . "\..\debug.txt";
     file_put_contents($debugFile, '');
 }
 
@@ -44,12 +44,12 @@ function mkpath($path)
     return mkpath(dirname($path)) && mkdir($path);
 }
 
-function config($key, $default=null, $assoc=false)
+function config($key, $default = null, $assoc = false)
 {
     $keyParts = explode('.', $key);
 
-    $phpFile = realpath(__DIR__ . '\..\\config\\'.$keyParts[0].'.php');
-    $jsonFile =  realpath(__DIR__ . '\..\\config\\'.$keyParts[0].'.json');
+    $phpFile = realpath(__DIR__ . '\..\\config\\' . $keyParts[0] . '.php');
+    $jsonFile =  realpath(__DIR__ . '\..\\config\\' . $keyParts[0] . '.json');
 
     if (!file_exists($phpFile)) {
         return null;
@@ -63,7 +63,7 @@ function config($key, $default=null, $assoc=false)
     if (!$assoc) {
         $value = to_object($value ?? []);
     }
-    
+
     for ($i = 1; $i < count($keyParts); $i++) {
         $value = ($assoc ? $value[$keyParts[$i]] ?? $default : $value->{$keyParts[$i]} ?? $default);
     }
@@ -79,18 +79,20 @@ function kebabToCamel($string)
 }
 
 
-function strline($haystack, $needle, $startpos=0, $startline=1)
+function strline($haystack, $needle, $startpos = 0, $startline = 1)
 {
     $lines = explode("\r\n", $haystack);
-    $needles = explode("\r\n", $needle??'');
+    $needles = explode("\r\n", $needle ?? '');
     foreach ($lines as $i => $line) {
         if (strpos($line, $needles[0]) !== false) {
-            if (strpos($haystack, $needle) < $startpos
-            || $i+1 < $startline) {
+            if (
+                strpos($haystack, $needle) < $startpos
+                || $i + 1 < $startline
+            ) {
                 continue;
             }
 
-            return intval($i)+1;
+            return intval($i) + 1;
         }
     }
 
@@ -125,6 +127,7 @@ function array_to_object($array)
     return $obj;
 }
 
-function array_value_last($array) {
+function array_value_last($array)
+{
     return empty($array) ? null : $array[array_key_last($array)];
 }

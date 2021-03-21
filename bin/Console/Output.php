@@ -14,32 +14,33 @@ class Output
     public function __construct()
     {
         // Set up shell colors
-        $this->foreColors['black'] = '0;30';//0
-        $this->foreColors['dark_gray'] = '1;30';//8
-        $this->foreColors['blue'] = '0;34';//1
-        $this->foreColors['light_blue'] = '1;34';//9
-        $this->foreColors['green'] = '0;32';//2
-        $this->foreColors['light_green'] = '1;32';//a
-        $this->foreColors['cyan'] = '0;36';//3
-        $this->foreColors['light_cyan'] = '1;36';//b
-        $this->foreColors['red'] = '0;31';//4
-        $this->foreColors['light_red'] = '1;31';//c
-        $this->foreColors['purple'] = '0;35';//5
-        $this->foreColors['light_purple'] = '1;35';//d
+        $this->foreColors['black'] = '0;30'; //0
+        $this->foreColors['dark_gray'] = '1;30'; //8
+        $this->foreColors['blue'] = '0;34'; //1
+        $this->foreColors['light_blue'] = '1;34'; //9
+        $this->foreColors['green'] = '0;32'; //2
+        $this->foreColors['light_green'] = '1;32'; //a
+        $this->foreColors['cyan'] = '0;36'; //3
+        $this->foreColors['light_cyan'] = '1;36'; //b
+        $this->foreColors['red'] = '0;31'; //4
+        $this->foreColors['light_red'] = '1;31'; //c
+        $this->foreColors['purple'] = '0;35'; //5
+        $this->foreColors['light_purple'] = '1;35'; //d
         $this->foreColors['brown'] = '0;33';
-        $this->foreColors['yellow'] = '1;33';//e
-        $this->foreColors['light_gray'] = '0;37';//7
-        $this->foreColors['white'] = '1;37';//f
+        $this->foreColors['yellow'] = '1;33'; //e
+        $this->foreColors['light_gray'] = '0;37'; //7
+        $this->foreColors['white'] = '1;37'; //f
         $this->foreColors['reset'] = '0';
 
-        $this->backColors['black'] = '40';
-        $this->backColors['red'] = '41';
-        $this->backColors['green'] = '42';
-        $this->backColors['yellow'] = '43';
-        $this->backColors['blue'] = '44';
-        $this->backColors['magenta'] = '45';
-        $this->backColors['cyan'] = '46';
-        $this->backColors['light_gray'] = '47';
+        $this->backColors['black'] = '40'; //0
+        $this->backColors['red'] = '41'; //4
+        $this->backColors['green'] = '42'; //2
+        $this->backColors['yellow'] = '43'; //e
+        $this->backColors['blue'] = '44'; //1
+        $this->backColors['magenta'] = '45'; //5
+        $this->backColors['cyan'] = '46'; //3
+        $this->backColors['light_gray'] = '47'; //7
+        $this->backColors['white'] = '37'; //7
 
         $this->colors = new Collection([
             "black" => "0",
@@ -95,9 +96,9 @@ class Output
     }
 
     // Clears php CLI Output
-    public function clear($returns=false)
+    public function clear($returns = false)
     {
-        $clearText = chr(27).chr(91).'H'.chr(27).chr(91).'J';
+        $clearText = chr(27) . chr(91) . 'H' . chr(27) . chr(91) . 'J';
         if ($returns) {
             return $clearText;
         } else {
@@ -111,15 +112,15 @@ class Output
     {
         preg_match_all(self::$parseRegex, $string, $m);
 
-        foreach ($m[0] as $i=>$replaceCode) {
+        foreach ($m[0] as $i => $replaceCode) {
             $isBack = !empty($m[1][$i]);
             $colorCode = $m[2][$i];
             $colorName = $this->colors->flip()->get($colorCode);
 
-            $string = str_replace($replaceCode, "\033[".$this->{($isBack ? 'back' : 'fore') . 'Colors'}[$colorName] . 'm', $string);
+            $string = str_replace($replaceCode, "\033[" . $this->{($isBack ? 'back' : 'fore') . 'Colors'}[$colorName] . 'm', $string);
         }
 
-        return $string."\033[0m";
+        return $string . "\033[0m";
     }
 
     public function up()
@@ -129,15 +130,15 @@ class Output
 
     public function print($string)
     {
-        echo $this->parse($string)."\n";
+        echo $this->parse($string) . "\n";
     }
-    
+
     public function pprint($string, $level = 0)
     {
         $levels = [
             '#a[INFO]',
-            '#e[NOTICE]',
-            '#4[WARN]'
+            '#e[WARN]',
+            '#4[ERROR]'
         ];
 
         $text = is_null($level) ? '' : $levels[$level] ?? '';

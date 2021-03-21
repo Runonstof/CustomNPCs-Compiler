@@ -3,9 +3,10 @@
 namespace App;
 
 use App\Compiler;
+use App\Compiler\Exceptions\CompilerException;
+use App\Compiler\FileCompiler;
 use App\Console\Input;
 use App\Console\Output;
-use App\Compiler\FileCompiler;
 use Tightenco\Collect\Support\Collection;
 
 class Console
@@ -14,18 +15,22 @@ class Console
     private $input;
     public $output;
 
+    private static $init = false;
+
     protected $doCliOutput = true;
 
     public function __construct()
     {
+        $this->init();
+
         $this->profiles = new Collection;
         $this->output = new Output;
         $this->input = new Input;
 
-        foreach (config('profiles', [], true) as $name=>$profile) {
+        foreach (config('profiles', [], true) as $name => $profile) {
             $this->profiles->put($name, (object) $profile);
         }
-    
+
         $this->input->options
             ->add(['option' => 'files::', 'name' => 'files', 'type' => 'array'])
             ->add(['option' => 'output::', 'name' => 'output', 'type' => 'array'])
@@ -41,14 +46,50 @@ class Console
             ->add(['option' => 'obfuscate::', 'name' => 'obfuscate', 'type' => 'bool'])
             ->add(['option' => 'source-comments::', 'name' => 'source-comments', 'type' => 'bool'])
             ->add(['option' => 'pre-run-script::', 'name' => 'pre-run-script', 'type' => 'string', 'default' => null])
-            ->add(['option' => 'with::', 'name' => 'with', 'type' => 'json', 'default' => null])
-        ;
+            ->add(['option' => 'with::', 'name' => 'with', 'type' => 'json', 'default' => null]);
+    }
+
+    public function init()
+    {
+        if (self::$init) {
+            return false;
+        }
+        self::$init = true;
+
+        Collection::macro('rget', function ($key) {
+            $value = $this;
+            $keys = explode('.', $key);
+
+            foreach ($keys as $_key) {
+                if (
+                    $value instanceof \Tightenco\Collect\Support\Collection
+                    || is_array($value)
+                ) {
+                    $value = $value[$_key];
+                } elseif (is_object($value)) {
+                    $value = $value->{$_key};
+                } else {
+                    return null;
+                }
+            }
+            return $value;
+        });
+
+        Collection::macro('recursive', function () {
+            return $this->map(function ($value) {
+                if (is_array($value) || is_object($value)) {
+                    return collect($value)->recursive();
+                }
+
+                return $value;
+            });
+        });
     }
 
     public function validateOptions($options)
     {
         if (!empty($options->profile)) {
-            if (is_null(config('profiles.'.$options->profile))) {
+            if (is_null(config('profiles.' . $options->profile))) {
                 $this->output->print("#@4Profile '{$options->profile}' doesn't exist!");
             }
         }
@@ -60,39 +101,39 @@ class Console
         $useProfile = $profileName ?? $options->profile ?? null;
         if (!empty($useProfile)) {
             $profile = $this->profiles->get($useProfile);
-            
-            foreach ($profile??[] as $key => $value) {
+
+            foreach ($profile ?? [] as $key => $value) {
                 $profile->{kebabToCamel($key)} = $value;
             }
 
 
-            
+
             if (!is_null($profile)) {
-                foreach ($profile->profiles??[] as $importProfile) {
+                foreach ($profile->profiles ?? [] as $importProfile) {
                     $this->injectProfileOptions($options, $importProfile);
                 }
-                
-                
-                foreach ($profile->files??[] as $file) {
+
+
+                foreach ($profile->files ?? [] as $file) {
                     if (in_array($file, $options->files)) {
                         continue;
                     }
                     $options->files[] = $file;
                 }
-                
-                $options->syntax = $profile->syntax??$options->syntax;
 
-                foreach ($profile->output??[] as $output) {
+                $options->syntax = $profile->syntax ?? $options->syntax;
+
+                foreach ($profile->output ?? [] as $output) {
                     if (in_array($output, $options->output)) {
                         continue;
                     }
                     $options->output[] = $output;
                 }
 
-                $options->plugins = $profile->plugins??$options->plugins??[];
-                $options->sourceComments = $profile->sourceComments??$options->sourceComments??false;
+                $options->plugins = $profile->plugins ?? $options->plugins ?? [];
+                $options->sourceComments = $profile->sourceComments ?? $options->sourceComments ?? false;
 
-                foreach ($profile->copyTo??[] as $copy) {
+                foreach ($profile->copyTo ?? [] as $copy) {
                     if (in_array($copy, $options->copyTo)) {
                         continue;
                     }
@@ -104,7 +145,7 @@ class Console
 
     public function load($language)
     {
-        foreach (config('plugins.'.$language) as $pluginClass) {
+        foreach (config('plugins.' . $language) as $pluginClass) {
             $plugin = new $pluginClass;
             if (method_exists($plugin, 'preLoad')) {
                 $plugin->preLoad($language);
@@ -120,9 +161,12 @@ class Console
         $this->toggleCliOutput(!$options->noOutput);
 
         $this->load($options->syntax);
-        
+
         $compiler = Compiler::create($options);
 
+        if (!empty($options->preRunScript)) {
+            include __DIR__ . '/../config/console/' . $options->preRunScript . '.php';
+        }
 
         // if ($options->watch) {
         $this->output->clear();
@@ -132,13 +176,10 @@ class Console
         if ($options->console) {
             readline_read_history('.console-history');
             $compiler->addPlugins($compiler->getPlugins());
-            $compiler->addPlugins($options->plugins??[]);
+            $compiler->addPlugins($options->plugins ?? []);
 
             $f = $compiler->getFileCompilers();
             //Pre run console scripts for debugging the compiler
-            if (!empty($options->preRunScript)) {
-                include __DIR__ . '/../config/console/' . $options->preRunScript.'.php';
-            }
 
             console:
             $cmd = readline(" >>> ");
@@ -146,11 +187,11 @@ class Console
             readline_write_history('.console-history');
             try {
                 $cmdOutput = @eval("return $cmd;");
-    
+
                 if ($this->doCliOutput) {
                     dump($cmdOutput);
                 }
-            } catch(\ParseError $exc) {
+            } catch (\ParseError $exc) {
                 $this->output->print(print_r($exc->getMessage()));
             }
 
@@ -168,13 +209,13 @@ class Console
                 $options->tree = 1;
             }
 
-            foreach ($fileCompilers as $fileCompilerIndex=>$fileCompiler) {
-                if ($options->tree > 0 && $fileCompilerIndex+1 != $options->tree) {
+            foreach ($fileCompilers as $fileCompilerIndex => $fileCompiler) {
+                if ($options->tree > 0 && $fileCompilerIndex + 1 != $options->tree) {
                     continue;
                 }
 
-                $this->output->print("#8[ Recursive file import tree of #7".$fileCompiler->getRelativeFilePath()." #8]");
-                $this->output->print("#2+ #e".$fileCompiler->getRelativeFilePath(). ($options->tree == 0 ? " #3(Do #c--tree=" . ($fileCompilerIndex + 1) . "#3 to show all imports of this file.)" : ''));
+                $this->output->print("#8[ Recursive file import tree of #7" . $fileCompiler->getRelativeFilePath() . " #8]");
+                $this->output->print("#2+ #e" . $fileCompiler->getRelativeFilePath() . ($options->tree == 0 ? " #3(Do #c--tree=" . ($fileCompilerIndex + 1) . "#3 to show all imports of this file.)" : ''));
 
                 if ($options->tree == 0) {
                     continue;
@@ -212,8 +253,8 @@ class Console
                         $outputtedImports->push($importCompiler->getRelativeFilePath());
                     }
                     $importPath = $importCompiler->getRelativeFilePath();
-                    $showPath = str_replace(basename($importPath), '#2'.basename($importPath), $importPath);
-                    
+                    $showPath = str_replace(basename($importPath), '#2' . basename($importPath), $importPath);
+
                     $this->output->print("$lines #e" . $showPath . ($alreadyImported ? ' #4[Already imported, skipped]' : ''));
                 });
                 $this->output->print('#8==============================================');
@@ -221,20 +262,27 @@ class Console
             exit;
         }
 
-        
+
 
         if (count($options->files) > 0) {
             $compiler->addPlugins($compiler->getPlugins());
-            $compiler->addPlugins($options->plugins??[]);
+            $compiler->addPlugins($options->plugins ?? []);
 
             compile:
             if (!$options->watch) {
-                $compiler->run($status);
+                try {
+                    $compiler->run($status);
+                } catch (CompilerException $exception) {
+                    // $this->output->pprint($exception->getMessage(), 2);
+                    $exception->outputError($this->output);
+                    return false;
+                }
+
                 if ($status == 0) {
-                    $compiler->copyOutput($options->copyTo??[]);
+                    $compiler->copyOutput($options->copyTo ?? []);
                     if (!$options->noOutput && !$options->watch) {
                         $this->output->pprint("#rSuccessfully compiled #e" . count($compiler->getFilePaths()) . "#r file(s). ");
-                        if (!empty($options->copyTo??[])) {
+                        if (!empty($options->copyTo ?? [])) {
                             $copyToCount = count($options->copyTo);
                             $this->output->pprint('#fCopied compiled files to #e' . $copyToCount . '#f ' . ($copyToCount == 1 ? 'directory' : 'directories') . '.');
                             $this->output->pprint('#3-> #bNow do #e/noppes script reload#b in-game#3 <-', null);
@@ -251,14 +299,14 @@ class Console
 
 
                 compileWatch:
-                
+
                 $filePathCount = 0;
                 $importFileCount = 0;
                 $checked = new Collection;
                 if (!$watchInit) {
                     foreach ($compiler->getFileCompilers() as $fileCompiler) {
                         $filePathCount++;
-                        
+
                         $fileCompiler->load()->eachRecursiveImport(function ($level, FileCompiler $importCompiler) use (&$compileCache, &$importFileCount, &$checked) {
                             if ($checked->contains($importCompiler->getFilePath())) {
                                 return false;
@@ -272,14 +320,19 @@ class Console
                 if (!$watchInit) {
                     $this->output->print('');
                     $this->output->clear();
-                    $this->output->print("#fWatching #e".$filePathCount." entry point#f files and #2".$importFileCount." imported#f files for changes.");
+                    $this->output->print("#fWatching #e" . $filePathCount . " entry point#f files and #2" . $importFileCount . " imported#f files for changes.");
                     $this->output->print("Press #eCTRL+C#r to quit.");
                 }
-                $compiler
-                ->fullReset()
-                ->run($status);
+                try {
+                    $compiler
+                        ->fullReset()
+                        ->run($status);
+                } catch (CompilerException $exception) {
+                    // $this->output->pprint($exception->getMessage(), 2);
+                    $exception->outputError($this->output);
+                }
                 if ($status == 0) {
-                    $copyTo = $options->copyTo??[];
+                    $copyTo = $options->copyTo ?? [];
                     $compiler->copyOutput($copyTo);
                     if (!empty($copyTo)) {
                         $copyToCount = count($copyTo);
@@ -288,15 +341,15 @@ class Console
                     }
                 }
                 $status = 0;
-                
+
                 watch:
-                
+
                 $triggered = false;
                 $watched = new Collection;
                 // dump($options);
                 $outputText = [];
 
-                foreach ($compiler->getFileCompilers() as $ii=>$fileCompiler) {
+                foreach ($compiler->getFileCompilers() as $ii => $fileCompiler) {
                     $fileCompilerPath = $fileCompiler->getFilePath();
                     $mtime = filemtime($fileCompilerPath);
                     if (intval($compileCache[$fileCompilerPath] ?? 0) != intval($mtime)) {
@@ -307,14 +360,14 @@ class Console
                         }
                     }
                     $compileCache[$fileCompilerPath] = intval($mtime);
-                    
+
                     $fileCompiler->load()->eachRecursiveImport(function ($level, FileCompiler $importCompiler) use (&$watched, &$triggered, &$compileCache, $options) {
                         $importPath = $importCompiler->getFilePath();
-                        
+
                         if ($watched->contains($importPath)) {
                             return false;
                         }
-                        
+
                         $cacheFileTime = $compileCache[$importPath] ?? null;
                         if (is_null($cacheFileTime)) {
                             $triggered = true;
@@ -354,7 +407,7 @@ class Console
         }
     }
 
-    public function toggleCliOutput($doOutput=null)
+    public function toggleCliOutput($doOutput = null)
     {
         if (is_null($doOutput)) {
             $this->doCliOutput = !$this->doCliOutput;

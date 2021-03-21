@@ -2,6 +2,7 @@
 
 namespace App\Compiler;
 
+use App\Compiler\Processors\HtmlGuiProcessor;
 use Closure;
 use Tightenco\Collect\Support\Collection;
 
@@ -9,7 +10,7 @@ class FileCompiler
 {
     private static $libraries = null;
     private static $libraryCache = [];
-    
+
     private $filePath;
     public $content;
     private $original;
@@ -20,6 +21,10 @@ class FileCompiler
     private $imported;
     public $sourceComments = false;
     public $meta;
+
+    const PREPROCESSORS = [
+        'html' => HtmlGuiProcessor::class
+    ];
 
     public function __construct($filePath, $sourceComments = false)
     {
@@ -57,7 +62,7 @@ class FileCompiler
 
         return $this;
     }
-    
+
     public function unload()
     {
         $this->original = '';
@@ -74,7 +79,7 @@ class FileCompiler
         // dump($matches);
         $yields = new Collection;
 
-        foreach ($matches[0] as $i=>$match) {
+        foreach ($matches[0] as $i => $match) {
             $yield = new \stdClass;
 
             $yield->content = $match;
@@ -93,7 +98,7 @@ class FileCompiler
         preg_match_all($blockRgx, $this->content, $matches);
         $blocks = new Collection;
 
-        foreach ($matches[0] as $i=>$match) {
+        foreach ($matches[0] as $i => $match) {
             $block = new \stdClass;
 
             $sourceCommentLine = '';
@@ -107,10 +112,10 @@ class FileCompiler
 
             $block->content = $match;
             $block->name = $matches[1][$i];
-            $block->innerContent = $sourceCommentLine.$matches[2][$i].$endSourceCommentLine;
+            $block->innerContent = $sourceCommentLine . $matches[2][$i] . $endSourceCommentLine;
             $block->file = $this->filePath;
             $block->lineNumber = $lineNumber;
-            
+
 
             $blocks->push($block);
         }
@@ -118,7 +123,7 @@ class FileCompiler
         return $blocks;
     }
 
-    public function scanModules($from='content', $scanContent = null)
+    public function scanModules($from = 'content', $scanContent = null)
     {
         $content = '';
         if (!is_null($from)) {
@@ -132,23 +137,23 @@ class FileCompiler
         preg_match_all($moduleRgx, $content, $matches);
         $modules = new Collection;
 
-        foreach ($matches[0] as $i=>$match) {
+        foreach ($matches[0] as $i => $match) {
             $sourceCommentLine = '';
             $endSourceCommentLine = '';
             $lineNumber = strline($content, $match);
-    
+
             if ($this->sourceComments) {
                 $sourceCommentLine = "/* === Module @{$matches[1][$i]} - Import File: " . $this->getRelativeFilePath() . ":$lineNumber */\n";
                 $endSourceCommentLine = "\n/* === End Module @{$matches[1][$i]} */";
             }
 
             $module = new \stdClass;
-            
+
             $module->content = $match;
             $module->name = $matches[1][$i];
             $module->constructor = $matches[2][$i];
             $module->requires = $matches[3][$i];
-            $module->innerContent = $sourceCommentLine.$matches[4][$i].$endSourceCommentLine;
+            $module->innerContent = $sourceCommentLine . $matches[4][$i] . $endSourceCommentLine;
             $module->file = $this->filePath;
             $module->lineNumber = $lineNumber;
 
@@ -170,25 +175,25 @@ class FileCompiler
         $libs = $this->getLibraries()->{$this->language} ?? null;
 
         $imports = new Collection;
-        foreach ($matches[0] as $i=>$match) {
+        foreach ($matches[0] as $i => $match) {
             $rawPath = $matches[2][$i] ?: $matches[3][$i];
             $importPath = $rawPath;
             if (empty($matches[2][$i])) {
                 $rawPath = str_replace('.', '/', $rawPath) . '.js';
             }
             $rawPath = realpath(__DIR__ . '/../../src') . '\\' . $rawPath;
-            
+
             //end replace
             $rawFiles = glob($rawPath);
 
             $relativeFilePaths = collect($rawFiles)->map(function ($rawFile) {
                 return str_replace(realpath(__DIR__ . '\..\..\\') . '\\', '', $rawFile);
             })->toArray();
-            
+
             if ($libs) {
                 if ($lib = ($libs->{$importPath} ?? false)) {
                     $libModules = explode(',', trim($matches[1][$i]));
-                    
+
                     foreach ($libModules as $libModuleName) {
                         $libModuleName = trim($libModuleName);
                         if (!isset($lib->{$libModuleName})) {
@@ -201,18 +206,19 @@ class FileCompiler
                     }
                 }
             }
-    
+
             $import = new \stdClass;
             $import->statement = $match;
             $import->modules = $matches[1][$i];
             $import->importPath = $importPath;
             $import->rawPath = $rawPath;
             $import->filePaths = $rawFiles;
+            $import->lineNumber = strline($this->content, $match);
+            $import->fileType = pathinfo($rawPath)['extension'] ?? 'js';
             $import->relativeFilePaths = $relativeFilePaths;
             $import->payload = is_json($matches[4][$i]) ? json_decode($matches[4][$i]) : [];
             $import->alias = $matches[5][$i];
-    
-    
+
             $imports->push($import);
         }
 
@@ -223,7 +229,7 @@ class FileCompiler
     {
         foreach ($this->getYields() as $yield) {
             $replaceContent = '';
-       
+
             foreach ($this->blocks->where('name', $yield->name) as $block) {
                 $replaceContent .= $block->innerContent;
             }
@@ -231,12 +237,12 @@ class FileCompiler
             $this->content = str_replace($yield->content, $replaceContent, $this->content);
         }
 
-        
+
 
         return $this;
     }
 
-    public function runBlocks(&$blocks=null)
+    public function runBlocks(&$blocks = null)
     {
         foreach ($this->scanBlocks() as $block) {
             $this->content = str_replace($block->content, '', $this->content);
@@ -250,7 +256,7 @@ class FileCompiler
         return $this;
     }
 
-    public function runModules(&$modules=null)
+    public function runModules(&$modules = null)
     {
         foreach ($this->scanModules() as $module) {
             $this->content = str_replace($module->content, '', $this->content);
@@ -264,7 +270,7 @@ class FileCompiler
         return $this;
     }
 
-    public function runImports(&$imported=[], &$blocks=null, &$modules=null)
+    public function runImports(&$imported = [], &$blocks = null, &$modules = null)
     {
         $imports = $this->getImports();
 
@@ -287,15 +293,15 @@ class FileCompiler
                             }
                             $importAlias = preg_replace('/.+?\s+as\s+([\w\W]+)/', '$1', $importModule);
                             $importModule = preg_replace('/(.+?)\s+as\s+[\w\W]+/', '$1', $importModule);
-                            
+
                             $module = $imported[$filePath]->fileCompiler->scanModules('original')
                                 ->filter(function ($importedFile) use ($importModule) {
                                     return fnmatch($importModule, $importedFile->name);
                                 })
                                 ->where('file', $imported[$filePath]->fileCompiler->getFilePath())
                                 ->first();
-                            
-                                
+
+
                             if ($module) {
                                 if (!empty(preg_replace('/\w+/', '', $importAlias))) {
                                     $importAlias = $module->name;
@@ -316,12 +322,12 @@ class FileCompiler
 
                     $importCached->fileCompiler = $importFile;
                     $importCached->modules = [];
-    
-                    
+
+
                     $importFile->addPlugins($this->plugins);
                     $importFile->run($imported, $blocks, $modules);
 
-                    
+
                     $sourceCommentLine = '';
                     $sourceCommentEndLine = '';
                     if ($this->sourceComments) {
@@ -342,8 +348,8 @@ class FileCompiler
                         }
                         $importAlias = preg_replace('/.+?\s+as\s+([\w\W]+)/', '$1', $importModule);
                         $importModule = preg_replace('/(.+?)\s+as\s+[\w\W]+/', '$1', $importModule);
-                        
-                        
+
+
                         $module = $importFile->scanModules('original')
                             ->filter(function ($importedFile) use ($importModule) {
                                 return fnmatch($importModule, $importedFile->name);
@@ -360,11 +366,16 @@ class FileCompiler
                             $moduleContent = preg_replace('/function (_\$)/m', 'function ' . $importAlias, $moduleContent);
                             $moduleContent = preg_replace('/(_\$)/m', $importAlias, $moduleContent);
                             $importContent = $moduleContent . "\n" . $importContent;
-                            
+
                             $importCached->modules[] = $importModuleStatement;
                         }
                     }
                 }
+            }
+
+            if (isset(self::PREPROCESSORS[$import->fileType])) {
+                $processorClass = self::PREPROCESSORS[$import->fileType];
+                $importContent = (new $processorClass)->run($importContent, $import, $this);
             }
 
             $this->content = str_replace($import->statement, $importContent, $this->content);
@@ -397,7 +408,7 @@ class FileCompiler
         return $this;
     }
 
-    public function run(&$imported=null, &$blocks=null, &$modules=null)
+    public function run(&$imported = null, &$blocks = null, &$modules = null)
     {
         if (is_null($imported)) {
             $imported = &$this->imported;
@@ -421,7 +432,7 @@ class FileCompiler
             ->runPlugins();
 
         $this->content = preg_replace("/(?:\r\n|\r|\n){3}/", "\n", $this->content);
-        
+
         return $this;
     }
 
@@ -430,7 +441,7 @@ class FileCompiler
         return $this->filePath;
     }
 
-    public function getRelativeFilePath($removeDir='')
+    public function getRelativeFilePath($removeDir = '')
     {
         return str_replace(realpath(__DIR__ . '\\..\\..\\') . '\\' . $removeDir, '', $this->filePath);
     }
@@ -444,16 +455,16 @@ class FileCompiler
                 if ($imports->contains('filePath', $filePath)) {
                     continue;
                 }
-    
+
                 $imports->push($import);
                 $importCompiler = new self($filePath);
-    
+
                 $importCompiler->load();
-    
-                $break = call_user_func_array($callback, [$level+1, $importCompiler]) === false;
-                
+
+                $break = call_user_func_array($callback, [$level + 1, $importCompiler]) === false;
+
                 if (!$break) {
-                    $importCompiler->eachRecursiveImport($callback, $imports, $level+1);
+                    $importCompiler->eachRecursiveImport($callback, $imports, $level + 1);
                 }
             }
         }
@@ -468,11 +479,11 @@ class FileCompiler
                 if ($imports->contains('filePath', $filePath)) {
                     continue;
                 }
-    
+
                 $imports->push($import);
-    
+
                 $importCompiler = new self($filePath);
-    
+
                 $importCompiler->load();
                 $importCompiler->getAllImports($imports);
             }
@@ -534,5 +545,10 @@ class FileCompiler
             self::$libraryCache[$importPath][$module] = $putFile;
         }
         return self::$libraryCache[$importPath][$module];
+    }
+
+    public function getOriginal()
+    {
+        return $this->original;
     }
 }

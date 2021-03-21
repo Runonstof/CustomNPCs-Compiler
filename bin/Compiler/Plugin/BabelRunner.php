@@ -22,15 +22,15 @@ class BabelRunner extends Plugin
     public function postCompile(Compiler $compiler, &$status)
     {
         // $a = exec('npm run build', $b, $c);
-        
+
         $compiler->console->output->pprint('#fRunning Babel for ES6 JavaScript features...');
-        
+
         $cmd = 'npm run build';
         flush();
         $proc = popen($cmd, 'r');
         while (!feof($proc)) {
             echo fread($proc, 4096);
-            @ flush();
+            @flush();
         }
         // dump($proc);
         $status = pclose($proc);

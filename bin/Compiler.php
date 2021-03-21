@@ -2,9 +2,9 @@
 
 namespace App;
 
-use JShrink\Minifier;
 use App\Compiler\FileCompiler;
 use App\Compiler\HunterObfuscator;
+use JShrink\Minifier;
 use Tightenco\Collect\Support\Collection;
 
 class Compiler
@@ -26,12 +26,12 @@ class Compiler
 
     public static function create($options)
     {
-        return new self($options->files??[], $options->syntax, count($options->output) ? $options->output : null, $options->sourceComments??false, $options->minify??false, $options->obfuscate??false, $options->app??null);
+        return new self($options->files ?? [], $options->syntax, count($options->output) ? $options->output : null, $options->sourceComments ?? false, $options->minify ?? false, $options->obfuscate ?? false, $options->app ?? null);
     }
 
-    public function __construct(array $files=[], string $language=null, array $outputFiles=null, bool $sourceComments = false, bool $minify = false, bool $obfuscate = false, Console $console = null)
+    public function __construct(array $files = [], string $language = null, array $outputFiles = null, bool $sourceComments = false, bool $minify = false, bool $obfuscate = false, Console $console = null)
     {
-        $this->scriptsFolder = realpath(__DIR__."\..\\") . "\scripts\\";
+        $this->scriptsFolder = realpath(__DIR__ . "\..\\") . "\scripts\\";
         $this->buildFolder = realpath(__DIR__ . '\..\\') . '\build\\';
         $this->outputFolder = realpath(__DIR__ . '\..\\') . '\build\\';
         $this->files = new Collection($files);
@@ -124,7 +124,7 @@ class Compiler
             }
 
             $compiler = new FileCompiler($filePath, $this->sourceComments);
-            
+
             $this->cache->push($compiler);
             $compiler->language = $this->language;
             $compilers[] = $compiler;
@@ -152,8 +152,7 @@ class Compiler
         $outputFiles = [];
 
         foreach ($fileCompilers as $i => $fileCompiler) {
-            $outputFile = $this->outputFiles[$i % count($this->outputFiles)];
-            ;
+            $outputFile = $this->outputFiles[$i % count($this->outputFiles)];;
             $outputFiles[] = $this->generateOutputFilePath($outputFile, $fileCompiler->getRelativeFilePath('scripts\\'));
         }
 
@@ -170,9 +169,9 @@ class Compiler
     public function generateOutputFilePath($outputFile, $originFile)
     {
         $path = $outputFile;
-        
+
         $fileInfo = pathinfo($originFile);
-        
+
         $path = str_replace([
             '{FileName}',
             '{FileBaseName}',
@@ -184,7 +183,7 @@ class Compiler
             $fileInfo['extension'] ?? '',
             $fileInfo['dirname'] ?? ''
         ], $path);
-        
+
         return $this->buildFolder . $path;
     }
 
@@ -207,11 +206,11 @@ class Compiler
 
         foreach ($fileCompilers as $i => $fileCompiler) {
             $outputFile = $this->outputFiles[$i % count($this->outputFiles)];
-            
+
             $outputFile = $this->generateOutputFilePath($outputFile, $fileCompiler->getrelativeFilePath('scripts\\'));
-            // dd($outputFile);
+
             $fileCompiler->run();
-            
+
             $outputDir = dirname($outputFile);
             if (!file_exists($outputDir)) {
                 mkpath($outputDir);
@@ -261,15 +260,15 @@ class Compiler
         //         file_put_contents($outputFile, $insertContent);
         //     }
         // }
-        
+
 
         return $this;
     }
 
-    public function copyOutput($copyPaths=[])
+    public function copyOutput($copyPaths = [])
     {
         $outputFiles = $this->getRelativeOutputPaths();
-        
+
         foreach ($outputFiles as $outputFile) {
             if (!file_exists($this->outputFolder . '\\' . $outputFile)) {
                 continue;
@@ -277,7 +276,7 @@ class Compiler
             foreach ($copyPaths as $copyPath) {
                 $copyTo = $copyPath . '\\' . $outputFile;
 
-                
+
 
                 $copyToDir = dirname($copyTo);
 
@@ -285,7 +284,6 @@ class Compiler
                     mkpath($copyToDir);
                 }
 
-                // dd(realpath($this->buildFolder . $outputFile), $copyTo);
                 copy(realpath($this->outputFolder . $outputFile), $copyTo);
             }
         }
@@ -300,7 +298,7 @@ class Compiler
 
     public function getPlugins()
     {
-        return config('plugins.'.$this->language);
+        return config('plugins.' . $this->language);
     }
 
     public function __call($method, $args)
@@ -315,9 +313,9 @@ class Compiler
     public function getProfile($profile)
     {
         $profile = null;
-        
-        config('profiles.'.$profile);
-        
+
+        config('profiles.' . $profile);
+
 
         return $profile;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Compiler\Plugin;
 
+use App\Compiler\Exceptions\CompilerException;
 use App\Compiler\FileCompiler;
 use App\Compiler\Plugin;
 use Tightenco\Collect\Support\Collection;
@@ -27,19 +28,19 @@ class MCPDecompiler extends Plugin
         }
     }
 
-    private static function getMCPMethod($methodPath, $overload=0, $srgFile=null, $useDotNotation=true)
+    private static function getMCPMethod($methodPath, $overload = 0, $srgFile = null, $useDotNotation = true)
     {
         return self::getMCP('method', $methodPath, $overload, $srgFile, $useDotNotation);
     }
 
-    private static function getMCPField($fieldPath, $overload=0, $srgFile=null, $useDotNotation=true)
+    private static function getMCPField($fieldPath, $overload = 0, $srgFile = null, $useDotNotation = true)
     {
         return self::getMCP('field', $fieldPath, $overload, $srgFile, $useDotNotation);
     }
 
-    
 
-    private static function getMCP($type, $mcpPath, $overload=0, $srgFile=null, $useDotNotation=true)
+
+    private static function getMCP($type, $mcpPath, $overload = 0, $srgFile = null, $useDotNotation = true)
     {
         self::init();
         if ($useDotNotation) {
@@ -65,11 +66,11 @@ class MCPDecompiler extends Plugin
                         continue;
                     }
                     $overloaded++;
-                    if($overloaded != $overload) {
+                    if ($overloaded != $overload) {
                         continue;
                     }
 
-                    
+
 
                     self::$decompMethodCache[$mcpOverloadPath] = $matches[2];
 
@@ -91,59 +92,59 @@ class MCPDecompiler extends Plugin
         $this->event('run');
 
         $rgxMcpMulti = syntax($this->language)->get('decompMCPMulti');
-        
+
         preg_match_all($rgxMcpMulti, $fileCompiler->content, $matches);
-      
-        foreach($matches[0] as $i=>$mcpImport) {
+
+        foreach ($matches[0] as $i => $mcpImport) {
             $mcpType = str_starts_with($matches[1][$i], 'method') ? 'method' : 'field';
             $mcpArgs = explode(',', trim($matches[2][$i]));
             $mcpNamespace = trim($matches[3][$i]);
             $mcpNamespaceAlias = trim($matches[4][$i]);
-            if(!empty($mcpNamespaceAlias)) {
+            if (!empty($mcpNamespaceAlias)) {
                 $mcpNamespaceAlias .= '_';
             }
 
-            foreach($mcpArgs as $mcpArg) {
+            foreach ($mcpArgs as $mcpArg) {
                 $mcpArg = trim($mcpArg);
                 $mcpArgInfo = preg_split('/\s+as\s+/', $mcpArg);
                 $mcpArgName = $mcpArgInfo[0];
                 preg_match(self::$rgxNamespaceNum, $mcpArgName, $nsMatches);
                 $mcpOverload = 0;
-                if(!empty($nsMatches)) {
+                if (!empty($nsMatches)) {
                     $mcpArgName = preg_replace(self::$rgxNamespaceNum, '', $mcpArgName);
                     $mcpOverload = intval($nsMatches[1] ?? 0);
                 }
 
                 $mcpArgAlias = $mcpArgInfo[1] ?? $mcpArgName;
                 $mcpAlias = $mcpNamespaceAlias . $mcpArgAlias;
-                
+
                 self::$mcpImportCache = self::$mcpImportCache
-                ->reject(function($cached) use($mcpAlias){
-                    return $cached->alias == $mcpAlias;
-                })    
-                ->push($dd = (object)[
-                    'type' => $mcpType,
-                    'namespace' => $mcpNamespace . '.' . $mcpArgName,
-                    'overload' => $mcpOverload,
-                    'alias' => $mcpAlias,
-                    'import' => $mcpImport
-                ]);
-                // dd(self::$mcpImportCache);
+                    ->reject(function ($cached) use ($mcpAlias) {
+                        return $cached->alias == $mcpAlias;
+                    })
+                    ->push($mcpImportCached = (object)[
+                        'type' => $mcpType,
+                        'namespace' => $mcpNamespace . '.' . $mcpArgName,
+                        'overload' => $mcpOverload,
+                        'alias' => $mcpAlias,
+                        'import' => $mcpImport
+                    ]);
+
+                $mcpDecomped = self::getMCP($mcpType, $mcpNamespace . '.' . $mcpArgName, $mcpOverload);
+                if (!$mcpDecomped) {
+                    throw new CompilerException('#fMCP Method #3' . $mcpNamespace . '.#b' . $mcpArgName . ' #fdoes not exist!', $fileCompiler->getOriginal(), strline($fileCompiler->getOriginal(), $mcpImport), $fileCompiler->getFilePath());
+                }
                 //TODO: Push no doubles
-                // dump($dd);
             }
-            // dump(compact('mcpType', 'mcpArgs', 'mcpNamespace', 'mcpNamespaceAlias'),"==========");
             $fileCompiler->content = str_replace($mcpImport, '', $fileCompiler->content);
-            
         }
-        // dd($matches);
-        
+
         $rgxMcp = syntax($this->language)->get('decompMCP');
 
         preg_match_all($rgxMcp, $fileCompiler->content, $matches);
-        
-        
-        foreach ($matches[0] as $i=>$mcpImport) {
+
+
+        foreach ($matches[0] as $i => $mcpImport) {
             $mcpType = $matches[1][$i];
             $mcpNamespace = $matches[2][$i];
             $mcpAlias = $matches[3][$i];
@@ -156,7 +157,7 @@ class MCPDecompiler extends Plugin
             if (!$cached) {
                 preg_match(self::$rgxNamespaceNum, $mcpArgName, $nsMatches);
                 $mcpOverload = 0;
-                if(!empty($nsMatches)) {
+                if (!empty($nsMatches)) {
                     $mcpArgName = preg_replace(self::$rgxNamespaceNum, '', $mcpArgName);
                     $mcpOverload = intval($nsMatches[1] ?? 0);
                 }
@@ -180,7 +181,7 @@ class MCPDecompiler extends Plugin
 
         preg_match_all($rgxMcpGet, $fileCompiler->content, $matches);
 
-        foreach ($matches[0] as $i=>$mcpImportGet) {
+        foreach ($matches[0] as $i => $mcpImportGet) {
             $mcpImportGetAlias = $matches[1][$i];
             $decomped = self::$mcpImportCache->where('alias', $mcpImportGetAlias)->first();
 
@@ -189,7 +190,7 @@ class MCPDecompiler extends Plugin
 
                 if ($decompedItem) {
                     $blockData[$decomped->alias] = $decompedItem;
-                    $fileCompiler->content = str_replace($mcpImportGet, '.'.$decompedItem, $fileCompiler->content);
+                    $fileCompiler->content = str_replace($mcpImportGet, '.' . $decompedItem, $fileCompiler->content);
                 }
             }
         }
@@ -198,7 +199,7 @@ class MCPDecompiler extends Plugin
 
         preg_match_all($rgxMcpGetShort, $fileCompiler->content, $matches);
 
-        foreach ($matches[0] as $i=>$mcpImportGet) {
+        foreach ($matches[0] as $i => $mcpImportGet) {
             $mcpImportGetAlias = $matches[1][$i];
             $decomped = self::$mcpImportCache->where('alias', $mcpImportGetAlias)->first();
 
