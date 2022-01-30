@@ -14,8 +14,17 @@ class Console
     public $profiles;
     private $input;
     public $output;
+    public $options;
 
     private static $init = false;
+    public static $watch = [];
+
+    public static function addWatch($file)
+    {
+        if (!in_array($file, self::$watch)) {
+            self::$watch[] = $file;
+        }
+    }
 
     protected $doCliOutput = true;
 
@@ -26,6 +35,7 @@ class Console
         $this->profiles = new Collection;
         $this->output = new Output;
         $this->input = new Input;
+        $this->options = new \stdClass;
 
         foreach (config('profiles', [], true) as $name => $profile) {
             $this->profiles->put($name, (object) $profile);
@@ -46,6 +56,7 @@ class Console
             ->add(['option' => 'obfuscate::', 'name' => 'obfuscate', 'type' => 'bool'])
             ->add(['option' => 'source-comments::', 'name' => 'source-comments', 'type' => 'bool'])
             ->add(['option' => 'pre-run-script::', 'name' => 'pre-run-script', 'type' => 'string', 'default' => null])
+            ->add(['option' => 'license::', 'name' => 'license', 'type' => 'string', 'default' => null])
             ->add(['option' => 'with::', 'name' => 'with', 'type' => 'json', 'default' => null]);
     }
 
@@ -132,6 +143,7 @@ class Console
 
                 $options->plugins = $profile->plugins ?? $options->plugins ?? [];
                 $options->sourceComments = $profile->sourceComments ?? $options->sourceComments ?? false;
+                $options->license = $options->license ?? $profile->license ?? false;
 
                 foreach ($profile->copyTo ?? [] as $copy) {
                     if (in_array($copy, $options->copyTo)) {
@@ -158,6 +170,9 @@ class Console
         $options = $this->input->getOptionInput();
         $this->injectProfileOptions($options);
         $this->validateOptions($options);
+
+        $this->options = $options;
+
         $this->toggleCliOutput(!$options->noOutput);
 
         $this->load($options->syntax);
@@ -262,12 +277,9 @@ class Console
             exit;
         }
 
-
-
         if (count($options->files) > 0) {
             $compiler->addPlugins($compiler->getPlugins());
             $compiler->addPlugins($options->plugins ?? []);
-
             compile:
             if (!$options->watch) {
                 try {
@@ -277,7 +289,6 @@ class Console
                     $exception->outputError($this->output);
                     return false;
                 }
-
                 if ($status == 0) {
                     $compiler->copyOutput($options->copyTo ?? []);
                     if (!$options->noOutput && !$options->watch) {
@@ -296,10 +307,8 @@ class Console
                 $compileCache = [];
 
 
-
-
                 compileWatch:
-
+                dump('watch');
                 $filePathCount = 0;
                 $importFileCount = 0;
                 $checked = new Collection;
@@ -307,7 +316,7 @@ class Console
                     foreach ($compiler->getFileCompilers() as $fileCompiler) {
                         $filePathCount++;
 
-                        $fileCompiler->load()->eachRecursiveImport(function ($level, FileCompiler $importCompiler) use (&$compileCache, &$importFileCount, &$checked) {
+                        $fileCompiler->load()->eachRecursiveImport(function (FileCompiler $importCompiler) use (&$compileCache, &$importFileCount, &$checked) {
                             if ($checked->contains($importCompiler->getFilePath())) {
                                 return false;
                             }
@@ -315,6 +324,9 @@ class Console
                             $compileCache[$importCompiler->getFilePath()] = intval(filemtime($importCompiler->getFilePath()));
                             $importFileCount++;
                         });
+                    }
+                    foreach (self::$watch as $watchFile) {
+                        $compileCache[$watchFile] = intval(filemtime($watchFile));
                     }
                 }
                 if (!$watchInit) {
@@ -348,10 +360,10 @@ class Console
                 $watched = new Collection;
                 // dump($options);
                 $outputText = [];
-
                 foreach ($compiler->getFileCompilers() as $ii => $fileCompiler) {
                     $fileCompilerPath = $fileCompiler->getFilePath();
                     $mtime = filemtime($fileCompilerPath);
+                    // dd($fileCompilerPath . ': ', intval($compileCache[$fileCompilerPath] ?? 0), '!=', intval($mtime), intval($compileCache[$fileCompilerPath] ?? 0) != intval($mtime));
                     if (intval($compileCache[$fileCompilerPath] ?? 0) != intval($mtime)) {
                         $triggered = true;
                         if (!$options->noOutput && isset($compileCache[$fileCompilerPath])) {
@@ -361,9 +373,7 @@ class Console
                     }
                     $compileCache[$fileCompilerPath] = intval($mtime);
 
-                    $fileCompiler->load()->eachRecursiveImport(function ($level, FileCompiler $importCompiler) use (&$watched, &$triggered, &$compileCache, $options) {
-                        $importPath = $importCompiler->getFilePath();
-
+                    $onFileChange = function ($importPath)  use (&$watched, &$triggered, &$compileCache, $options) {
                         if ($watched->contains($importPath)) {
                             return false;
                         }
@@ -385,15 +395,25 @@ class Console
                             $compileCache[$importPath] = intval(filemtime($importPath));
                         }
                         $watched->push($importPath);
-                    });
-                }
+                    };
 
+                    // dump('11aa');
+                    $fileCompiler->load()->eachRecursiveImport(function (FileCompiler $importCompiler) use ($onFileChange) {
+                        // dump('1');
+                        // dump($importCompiler->getFilePath());
+                        $importPath = $importCompiler->getFilePath();
+                        $onFileChange($importPath);
+                    });
+                    foreach (self::$watch as $watchFile) {
+                        $onFileChange($watchFile);
+                    }
+                }
                 if (!$watchInit) {
                     $triggered = false;
                 }
 
                 $watchInit = true;
-                clearstatcache();
+                // clearstatcache();
                 if ($triggered) {
                     $this->output->clear();
                     foreach ($outputText as $outputLine) {

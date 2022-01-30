@@ -4,6 +4,7 @@ namespace App\HtmlGui\Components;
 
 class GuiScript extends GuiComponent
 {
+    public $templateConstruct = true;
     public $type = 'script';
 
     public function renderJs()

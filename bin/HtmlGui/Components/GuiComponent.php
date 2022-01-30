@@ -3,6 +3,7 @@
 namespace App\HtmlGui\Components;
 
 use App\Compiler\Exceptions\CompilerException;
+use App\Console;
 use App\Helpers\XMLHelper;
 use App\HtmlGui\GuiAttributes;
 use App\HtmlGui\GuiCollection;
@@ -15,10 +16,23 @@ class GuiComponent
     public static $attrReplaces = [
         '<' => '&lt;',
         '>' => '&gt;',
+        '&&' => '&amp;&amp;',
         '&' => '&amp;',
         '"' => '&quot;',
         '\'' => '&apos;',
     ];
+
+    public static $globalReplacesRgx = [
+        '/<\s/' => '&lt; ',
+    ];
+    public static $globalReplaces = [
+        '&' => '&amp;',
+        '<=' => '&lt;='
+    ];
+
+    //true when handling with special components like exports
+    public $templateConstruct = false;
+
 
     protected static $componentRegistry = [];
 
@@ -55,7 +69,11 @@ class GuiComponent
         'button' => GuiButton::class,
         'label' => GuiLabel::class,
         'text-field' => GuiTextField::class,
+        'slot' => GuiSlot::class,
         'script' => GuiScript::class,
+        'img' => GuiImage::class,
+        'export' => GuiExport::class,
+        // 'texture' => GuiTexture::class, //deprecated
     ];
 
     const SPECIAL_TYPES = [
@@ -89,7 +107,44 @@ class GuiComponent
         $this->style = new GuiStyle;
         $this->attributes = new GuiAttributes;
         $this->children = new GuiCollection;
-        $this->props = new Collection;
+        $this->props = new Collection([
+            'onclick' => [
+                'name' => 'onclick',
+                'type' => 'function',
+                'default' => [
+                    'value' => 'null',
+                    'isJs' => true
+                ],
+                'required' => false
+            ],
+            'onclicked' => [
+                'name' => 'onclicked',
+                'type' => 'function',
+                'default' => [
+                    'value' => 'null',
+                    'isJs' => true
+                ],
+                'required' => false
+            ],
+            'onchange' => [
+                'name' => 'onchange',
+                'type' => 'function',
+                'default' => [
+                    'value' => 'null',
+                    'isJs' => true
+                ],
+                'required' => false
+            ],
+            'onchanged' => [
+                'name' => 'onchanged',
+                'type' => 'function',
+                'default' => [
+                    'value' => 'null',
+                    'isJs' => true
+                ],
+                'required' => false
+            ],
+        ]);
         $this->propValues = new GuiAttributes;
 
         self::$componentRegistry[$this->uniqid] = $this;
@@ -146,24 +201,18 @@ class GuiComponent
         if (empty($this->var)) {
             return $prefix . 'gui_component_' . $this->uniqid . $suffix;
         }
-        return $prefix . $this->var . $suffix;
+        return ($this->attributes->isJs('var') ? '' : $prefix) . $this->var . $suffix;
     }
 
     public function getJsId()
     {
         $useId = $this->attributes->get('id', '') ?: $this->uniqid;
-        $showId = $useId !== $this->uniqid;
-        $id = '';
+        $id = $useId;
 
-        if ($showId) {
-            $id .= $useId;
-        }
 
         if ($this->attributes->has('key')) {
-            if ($showId) {
-                $id .= '_\' + ';
-            }
-            $id .= $this->attributes->get('key', null, true);
+
+            $id .= ' + \'_\' +' . $this->attributes->get('key', null, true);
         }
         return $id;
     }
@@ -181,13 +230,18 @@ class GuiComponent
 
     public function getStaticIds()
     {
-        $jsId = $this->attributes->get('id', '') ?: $this->uniqid;
+        $jsId = $this->attributes->get('id', $this->uniqid);
+        $jsIdIsJs = $this->attributes->isJs('id');
         $max = abs(intval($this->attributes->get('max', $this->hasParent() ? $this->getParent()->attributes->get('max', 0, true) : 0, true)));
 
         if ($max > 0) {
             $ids = [];
             for ($i = 0; $i < $max; $i++) {
-                $ids[] = $jsId . '_' . $i;
+                if ($jsIdIsJs) {
+                    $ids[] = $jsId . " + '_$i'";
+                } else {
+                    $ids[] = '"' . trim($jsId, '"') . '_' . $i . '"';
+                }
             }
 
             return $ids;
@@ -211,7 +265,10 @@ class GuiComponent
         $x += $this->style->get('margin.left', 0);
         $x += $this->style->get('border.width', 0);
         $x += $this->style->get('padding.left', 0);
-        $x += $this->canvasX;
+        if (!$this->attributes->isJs('x')) {
+            $x += intval($this->attributes->get('x', null, true));
+        }
+        // $x += $this->canvasX;
 
         return $x;
     }
@@ -226,7 +283,10 @@ class GuiComponent
         $y += $this->style->get('margin.top', 0);
         $y += $this->style->get('border.width', 0);
         $y += $this->style->get('padding.top', 0);
-        $y += $this->canvasY;
+        if (!$this->attributes->isJs('y')) {
+            $y += intval($this->attributes->get('y', null, true));
+        }
+        // $y += $this->canvasY;
 
         return $y;
     }
@@ -263,12 +323,12 @@ class GuiComponent
 
     public function getRenderSuffixX()
     {
-        return ($this->x == '0' || is_null($this->x) ? '' : ' + (' . $this->x . ')');
+        return ($this->attributes->isJs('x') ? ' + (' . $this->attributes->get('x') . ')' : '');
     }
 
     public function getRenderSuffixY()
     {
-        return ($this->y == '0' || is_null($this->y) ? '' : ' + (' . $this->y . ')');
+        return ($this->attributes->isJs('y') ? ' + (' . $this->attributes->get('y') . ')' : '');
     }
 
     public function getRenderX()
@@ -346,6 +406,8 @@ class GuiComponent
         return isset($this->getComponents()[$name]);
     }
 
+
+
     public function addComponent($name, $componentArray)
     {
         $root = $this->getRoot();
@@ -356,7 +418,7 @@ class GuiComponent
         }
     }
 
-    public function addChild($children, $id = null)
+    public function addChild($children, $id = null, $atEnd = true)
     {
         if (!is_array($children)) {
             $children = [$children];
@@ -367,7 +429,11 @@ class GuiComponent
             if ($id) {
                 $child->setId($id);
             }
-            $this->children[$child->getUniqid()] = $child;
+            if ($atEnd) {
+                $this->children[$child->getUniqid()] = $child;
+            } else {
+                $this->children = collect([$child->getUniqid() => $child] + $this->children->all());
+            }
         }
 
         return $this;
@@ -442,10 +508,9 @@ class GuiComponent
         return $gui;
     }
 
-    public static function getXmlArray($xmlString)
+    public static function escapeXML($xmlString)
     {
-        $contents = "<gui>{$xmlString}</gui>";
-        $xml = new \DOMDocument;
+        $contents = "<gui>$xmlString</gui>";
         $contents = preg_replace_callback(GuiComponent::$rgxAttribute, function ($matches) {
             $escaped = str_replace(
                 array_keys(GuiComponent::$attrReplaces),
@@ -456,7 +521,27 @@ class GuiComponent
             return "$matches[1]=\"$escaped\"$matches[3]";
         }, $contents);
 
-        $contents = trim($contents);
+        $contents = str_replace(
+            array_keys(self::$globalReplaces),
+            array_values(self::$globalReplaces),
+            $contents
+        );
+
+        $contents = preg_replace(
+            array_keys(self::$globalReplacesRgx),
+            array_values(self::$globalReplacesRgx),
+            $contents
+        );
+
+        return trim($contents);
+    }
+
+    public static function getXmlArray($xmlString)
+    {
+        $contents = self::escapeXML($xmlString);
+
+        $xml = new \DOMDocument;
+
         $xml->loadXML($contents);
         $xmlRootElement = $xml->documentElement;
 
@@ -538,7 +623,13 @@ class GuiComponent
                 }
             }
             if ($parent) {
-                $parent->addChild($component);
+                $atEnd = true;
+                if ($component->attributes->has('index')) {
+                    if ($component->attributes->get('index', null, true) == 'top') {
+                        $atEnd = false;
+                    }
+                }
+                $parent->addChild($component, null, $atEnd);
             }
             if (count($xmlArray['children'])) {
                 foreach ($xmlArray['children'] as $xmlChild) {
@@ -571,12 +662,13 @@ class GuiComponent
                     }
 
                     if (!file_exists($file)) {
-                        throw new CompilerException('File in <component> #6' . $file . '#r does not exist!');
+                        throw new CompilerException('File in <component name="' . $name . '"> #6' . $file . '#r does not exist!');
                     }
 
                     if ($parent->hasComponent($name)) {
                         throw new CompilerException('Custom component \'' . $name . '\' already registered in this gui instance');
                     }
+                    Console::addWatch($file);
                     $contents = file_get_contents($file);
                     $parent->addComponent($name, self::getXmlArray($contents));
                     break;
@@ -591,22 +683,27 @@ class GuiComponent
                     $propDefault = $xmlArray['attributes']['default'] ?? ['isJs' => true, 'value' => 'undefined'];
                     $propDefault['isJs'] = true;
 
+                    $propType = $xmlArray['attributes']['type']['value'] ?? null;
+
                     $propRequired = $xmlArray['attributes']['required']['value'] ?? false;
                     $parent->props[$propName] = [
                         'name' => $propName,
+                        'type' => $propType,
                         'default' => $propDefault,
                         'required' => $propRequired
                     ];
 
-
                     break;
             }
-            if ($parent && !in_array($xmlArray['type'], ['component', 'prop'])) {
+            if ($parent && !in_array($xmlArray['type'], self::SPECIAL_TYPES)) {
                 if ($parent->hasComponent($xmlArray['type'])) {
                     $componentArray = $parent->getComponent($xmlArray['type']);
                     $component = self::fromArray($componentArray, $options, $parent);
                     $component->componentType = $xmlArray['type'];
-                    $component->propValues = new GuiAttributes($xmlArray['old_attributes']);
+                    $component->propValues = new GuiAttributes($xmlArray['old_attributes'] ?? []);
+                    $newAttributes = $component->propValues->copy();
+                    $newAttributes->merge($component->attributes);
+                    $component->attributes = $newAttributes;
                 }
             }
 
@@ -627,11 +724,15 @@ class GuiComponent
                 'renderConstructs' => true,
                 'renderComponentFuncs' => true,
                 'baseAttributes' => false,
+                'renderVars' => true,
+                'renderUpdate' => true,
             ],
             'renderIds' => [
                 'renderConstructs' => false,
                 'renderComponentFuncs' => true,
                 'baseAttributes' => true,
+                'renderVars' => false,
+                'renderUpdate' => false,
             ]
         ];
         if (!in_array($renderFunc, array_keys($renderFuncOptions))) {
@@ -642,32 +743,92 @@ class GuiComponent
         $renderConstructs = $renderFuncOptions[$renderFunc]['renderConstructs'];
         $renderComponentFuncs = $renderFuncOptions[$renderFunc]['renderComponentFuncs'];
         $baseAttributes = $renderFuncOptions[$renderFunc]['baseAttributes'];
+        $renderVars = $renderFuncOptions[$renderFunc]['renderVars'];
+        $renderUpdate = $renderFuncOptions[$renderFunc]['renderUpdate'];
 
         $js = '';
 
+        if (!$this->hasParent()) {
+            // $js .= "var _createGuiRender = function(_renders){" .
+            //     "return function(){\n" .
+            //     "for(var renderId in _renders){\n" .
+            //     "_renders[renderId]();\n" .
+            //     "\n}};\n}\n";
+            // $js .= "var _createGuiUpdate = function(_updates){" .
+            //     "return function(_player){\n" .
+            //     "for(var updateId in _updates){\n" .
+            //     "_updates[updateId](_player);\n" .
+            //     "\n}};\n}\n";
+            // $js .= "var _createGuiEmitter = function(_props){" .
+            //     " return function(eventName, args){\n" .
+            //     "\tif(typeof _props[eventName] == 'function') {\n" .
+            //     "\t_props[eventName](...args)\n" .
+            //     "\n}\n" .
+            //     "\n};" .
+            //     "}";
+        }
+
+
         $jsFor = $this->attributes->get('for', null, true);
+        $jsWhile = $this->attributes->get('while', null, true);
         $jsIf = $this->attributes->get('if', null, true);
+        $jsElseIf = $this->attributes->get('else-if', null, true);
+        $jsElse = $this->attributes->get('else', null, true);
 
         if ($renderConstructs) {
             if ($jsFor) {
                 $js .= "for($jsFor) {\n";
+            } elseif ($jsWhile) {
+                $js .= "while($jsWhile) {\n";
             } elseif ($jsIf) {
                 $js .= "if($jsIf) {\n";
+            } elseif ($jsElseIf) {
+                $js .= "else if($jsElseIf) {\n";
+            } elseif ($jsElse) {
+                $js .= "else {\n";
             }
         }
 
-        $js .= $this->{$renderFunc}() ?: '';
+        $uniqid = $this->getUniqid();
+        $jsRenderFuncName = '$renderFunc_' . $uniqid;
+        $jsKey = $this->attributes->get('key', 0, true);
+        $jsRenderFunc = ($this->{$renderFunc}() ?: '');
+
+
+        if (!empty($jsRenderFunc)) {
+            if (!$this->templateConstruct && $renderFunc !== 'renderIds') {
+                $jsRenderId = $this->attributes->get('render-id', $uniqid);
+                $js .= '' .
+                    "\$constructors[{$this->getRenderId()}] = function(){
+                        API.getIWorld(0).broadcast('Returning consturct props: ' + {$this->getRenderId()});return (gui || \$data.player.getCustomGui()).getComponent(id({$this->getRenderId()}));};" .
+                    "var $jsRenderFuncName = function(\$key){ $jsRenderFunc };\$renders[$jsRenderId] = [$jsRenderFuncName, [" . $jsKey . "]];" .
+                    $jsRenderFuncName . '(' . $jsKey . ');' .
+                    "API.getIWorld(0).broadcast('I ====: ' + i);" .
+                    ($renderVars ? $this->getRenderVar('/* ATEST */var ', ' = ') : '') . "\$construct({$this->getRenderId()});" .
+                    '';
+            } else {
+                $js .= $jsRenderFunc;
+            }
+        }
 
         foreach ($this->children as $child) {
             if (!$child->isComponent()) {
                 $js .= "\n" . $child->render($renderFunc);
             } else {
                 if ($renderComponentFuncs) {
-                    $js .= "\n/*LETTT*/let func_" . $child->getUniqid() . ' = ' . $child->renderAsFunction('', $baseAttributes ? null : [], $renderFunc);
+                    $funcName = $child->attributes->get('var', 'func_' . $child->getUniqid(), true);
+                    if (!$child->attributes->isJs('var')) {
+                        $funcName = 'let ' . $funcName;
+                    }
+                    if ($renderFunc == 'renderIds') {
+                        $funcName = 'let _idFunc' . uniqid();
+                    }
+
+                    $js .= "\n$funcName = " . $child->renderAsFunction('', $baseAttributes ? null : [], $renderFunc);
                     if ($baseAttributes) {
                         $attributes = $child->propValues->only(['id']);
 
-                        $js .= '(null, ' . $attributes->toPropJs() . ')';
+                        $js .= '(null, ' . $attributes->toPropJs($child->props) . ')';
                     }
                 } else {
                     $js .= "\n" . $child->render($renderFunc);
@@ -675,8 +836,12 @@ class GuiComponent
             }
         }
 
-        if (($jsFor || $jsIf) && $renderConstructs) {
+        if (($jsFor || $jsWhile || $jsIf || $jsElseIf || $jsElse) && $renderConstructs) {
             $js .= "\n}";
+        }
+
+        if (!$this->hasParent() && $renderUpdate) {
+            $js .= "\nif(\$data.player) { gui.update(\$data.player) }";
         }
 
         return $js;
@@ -693,21 +858,38 @@ class GuiComponent
 
     public function renderAsFunction($alias = '', $runWithArgs = null, $renderFunc = 'renderJs')
     {
-        $js = 'function' . (!empty($alias) ? ' ' . $alias : '') .
-            '(gui = null, $props = {}, $data = []){' . "\n";;
+        $js = '';
+        if (is_array($runWithArgs)) {
+            $js .= '(';
+        }
+        $js .= 'function' . (!empty($alias) ? ' ' . $alias : '') .
+            '(gui = null' . (!$this->hasParent() ? ', $data = []' : '') . ', $props = {}){' . "\n";
+        $js .= "let \$refs = {};\n";
+        $js .= "let \$renders = {};";
+        $js .= "let \$constructors = {};";
+        $js .= "let \$construct = _createGuiComponentConstructor(\$constructors);";
+        $js .= "let \$return = {gui};";
+        $js .= "let \$render = _createGuiRender(\$renders);\n";
 
-        $js .= "/*TEST1*/\n";
+        if ($this->hasParent()) {
+            $js .= "let \$emit = _createGuiEmitter(\$props);\n";
+            // $js .= "let \$emit = function(eventName, args){\n" .
+            //     "\tif(typeof \$props[eventName] == 'function') {\n" .
+            //     "\t\$props[eventName](...args)\n" .
+            //     "\n}\n" .
+            //     "\n};";
+        }
+
         $js .= $this->render($renderFunc);
-        $js .= "/*== TEST1*/\n";
-
+        $js .= "\nreturn \$return;\n";
         $js .= "\n}";
 
         if (is_array($runWithArgs)) {
             $propsJs = '{}';
             if ($this->isComponent()) {
-                $propsJs = $this->propValues->toPropJs();
+                $propsJs = $this->propValues->toPropJs($this->props);
             }
-            $js .= '(gui, ' . $propsJs . ', [' . implode(', ', $runWithArgs) . '])';
+            $js .= ')(gui, ' . $propsJs . ', [' . implode(', ', $runWithArgs) . ']);';
         }
 
         return $js;

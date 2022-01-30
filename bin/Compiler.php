@@ -21,6 +21,8 @@ class Compiler
     protected $buildFolder;
     protected $outputFolder;
 
+    private static $init = false;
+
 
     private $cache;
 
@@ -43,6 +45,16 @@ class Compiler
         $this->console = $console;
 
         $this->cache = new Collection($this->getNewFileCompilers());
+
+        self::init();
+    }
+
+    public static function init()
+    {
+        // if (self::$init) {
+        //     return false;
+        // }
+        // self::$init = true;
     }
 
     public function setBuildFolder($directory)
@@ -240,6 +252,16 @@ class Compiler
 
             if (!$failed) {
                 // $putContents[$outputFile] = $insertContent;
+
+                if ($this->console) {
+                    if ($this->console->options->license ?? false) {
+                        $licenseFile = $this->console->options->license;
+                        if (file_exists($licenseFile)) {
+                            $insertContent = file_get_contents($licenseFile) . "\n" . $insertContent;
+                        }
+                    }
+                }
+
                 file_put_contents($outputFile, $insertContent);
             }
         }
@@ -254,7 +276,6 @@ class Compiler
                 }
             }
         }
-
         // if (!$failed) {
         //     foreach ($putContents as $outputFile => $insertContent) {
         //         file_put_contents($outputFile, $insertContent);

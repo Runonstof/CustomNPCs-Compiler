@@ -8,7 +8,7 @@ class GuiTextField extends GuiComponent
 
     public function renderJs()
     {
-        $js = $this->getRenderVar('var ', ' = ') . 'gui.addTextField(id(' . $this->getRenderId() . '), ' .
+        $js = 'var _component = gui.addTextField(id(' . $this->getRenderId() . '), ' .
             $this->getRenderX() . ', ' .
             $this->getRenderY() . ', ' .
             $this->attributes->get('width', 90, true) . ', ' .
@@ -17,9 +17,10 @@ class GuiTextField extends GuiComponent
         if ($this->text) {
 
             $js .= "\n" .
-                $this->getRenderVar() . '.setText(' . $this->text . ');';
+                '_component.setText(' . $this->text . ');';
         }
 
+        $js .= "\nreturn _component;";
         return $js;
     }
 }

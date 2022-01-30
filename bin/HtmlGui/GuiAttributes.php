@@ -2,13 +2,23 @@
 
 namespace App\HtmlGui;
 
+use App\HtmlGui\Components\GuiComponent;
+
 class GuiAttributes
 {
+    const JS_ATTRIBUTES = [
+        'width',
+        'height',
+        'x',
+        'y'
+    ];
+
     private $rawData = [];
     private $data = [];
 
     public function __construct($data = [])
     {
+        $data = $data ?? [];
         $this->rawData = $data;
         foreach ($data as $propName => $propValue) {
             $isJs = false;
@@ -20,6 +30,15 @@ class GuiAttributes
 
             $this->add($propName, $propValue, $isJs);
         }
+    }
+
+    public function merge($data)
+    {
+        if (is_array($data)) {
+            $attributes = new self($data);
+            return $this->merge($attributes);
+        }
+        return $this->data = array_merge($this->data, $data->getData());
     }
 
     public function copy(): self
@@ -88,7 +107,15 @@ class GuiAttributes
             $isJs = $asJs;
         }
 
-        return $isJs ? $propData['value'] : json_encode($propData['value']);
+        $value = $isJs ? $propData['value'] : json_encode($propData['value']);
+
+        $value = str_replace(
+            array_values(GuiComponent::$attrReplaces),
+            array_keys(GuiComponent::$attrReplaces),
+            $value
+        );
+
+        return $value;
     }
 
     public function keys()
@@ -96,8 +123,17 @@ class GuiAttributes
         return array_keys($this->data);
     }
 
+    public function getData()
+    {
+        return $this->data;
+    }
+
     public function isJs($propName)
     {
+        if (!$this->has($propName)) {
+            return false;
+        }
+
         return $this->data[$propName]['isJs'] ?? false;
     }
 
@@ -111,13 +147,22 @@ class GuiAttributes
         return $data;
     }
 
-    public function toPropJs()
+    public function toPropJs($propsData = [])
     {
         $array = [];
         $js = '{';
         $i = 0;
         foreach ($this->data as $propName => $prop) {
-            $value = $this->get($propName, null, $prop['isJs']);
+            $value = $this->get($propName, null, $prop['isJs'] || in_array($propName, self::JS_ATTRIBUTES));
+
+            if (isset($propsData[$propName])) {
+                switch ($propsData[$propName]['type']) {
+                    case 'function':
+                        $value = "function(){ $value }";
+                        break;
+                }
+            }
+
             $js .= "\"$propName\":$value" . ($i < count($this->data) - 1 ? ',' : '');
             $i++;
         }

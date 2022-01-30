@@ -115,6 +115,10 @@ class MCPDecompiler extends Plugin
                     $mcpOverload = intval($nsMatches[1] ?? 0);
                 }
 
+                if (empty($mcpArg)) {
+                    continue;
+                }
+
                 $mcpArgAlias = $mcpArgInfo[1] ?? $mcpArgName;
                 $mcpAlias = $mcpNamespaceAlias . $mcpArgAlias;
 
@@ -204,6 +208,7 @@ class MCPDecompiler extends Plugin
             $decomped = self::$mcpImportCache->where('alias', $mcpImportGetAlias)->first();
 
             if ($decomped) {
+                dump('get', $decomped);
                 $decompedItem = self::getMCP($decomped->type, $decomped->namespace, $decomped->overload);
                 if ($decompedItem) {
                     $blockData[$decomped->alias] = $decompedItem;

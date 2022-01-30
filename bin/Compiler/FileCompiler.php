@@ -186,9 +186,15 @@ class FileCompiler
             //end replace
             $rawFiles = glob($rawPath);
 
-            $relativeFilePaths = collect($rawFiles)->map(function ($rawFile) {
-                return str_replace(realpath(__DIR__ . '\..\..\\') . '\\', '', $rawFile);
-            })->toArray();
+            $relativeFilePaths = collect($rawFiles)
+                ->map(function ($rawFile) {
+                    return str_replace(realpath(__DIR__ . '\..\..\\') . '\\', '', $rawFile);
+                })
+                // ->filter(function ($file) use ($except) {
+                //     // dump($file, $except);
+                //     return !in_array(COMPILER_ROOT . DIRECTORY_SEPARATOR . $file, $except);
+                // })
+                ->toArray();
 
             if ($libs) {
                 if ($lib = ($libs->{$importPath} ?? false)) {
@@ -450,24 +456,30 @@ class FileCompiler
     {
         $imports = $imports ?? new Collection;
 
+        $importPaths = $imports->pluck('filePaths')->flatten()->unique();
+
         foreach ($this->getImports() as $import) {
             foreach ($import->filePaths as $filePath) {
-                if ($imports->contains('filePath', $filePath)) {
+                // dump('d:' . $filePath, $importPaths);
+                if ($importPaths->contains($filePath)) {
+                    // dump(true);
                     continue;
                 }
-
                 $imports->push($import);
+
                 $importCompiler = new self($filePath);
 
                 $importCompiler->load();
 
-                $break = call_user_func_array($callback, [$level + 1, $importCompiler]) === false;
+                $break = call_user_func_array($callback, [$importCompiler]) === false;
 
                 if (!$break) {
                     $importCompiler->eachRecursiveImport($callback, $imports, $level + 1);
                 }
             }
         }
+
+        // dd('endre');
     }
 
     public function getAllImports(Collection &$imports = null)

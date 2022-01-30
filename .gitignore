@@ -1,7 +1,9 @@
 /node_modules
+/assets
 /vendor/
 .eslintrc.js
 debug.txt
 .console-history
 /temp/**
 config/profiles.json
+.vscode

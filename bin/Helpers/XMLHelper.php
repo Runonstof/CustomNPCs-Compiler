@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use DOMComment;
 use DOMElement;
 
 class XMLHelper
@@ -11,16 +12,19 @@ class XMLHelper
         $children = [];
 
         foreach ($domElement->childNodes as $childElement) {
+            if ($childElement instanceof DOMComment) {
+                continue;
+            }
             if ($childElement->nodeName == '#text') {
                 continue;
             }
 
             $attributes = [];
-
             foreach ($childElement->attributes as $attrName => $attrValue) {
                 // dump(compact('attrName', 'attrValue'));
                 $attributes[$attrName] = $attrValue->value;
             }
+
 
             $child = [
                 // 'element' => $childElement,

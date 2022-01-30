@@ -7,9 +7,9 @@ use App\Console\Output;
 abstract class Plugin implements IPlugin
 {
     public $language;
-    public Output $output;
+    public $output;
 
-    public function __construct($language='js')
+    public function __construct($language = 'js')
     {
         $this->language = $language;
         $this->output = new Output;
@@ -17,7 +17,7 @@ abstract class Plugin implements IPlugin
 
     public static function all($language)
     {
-        $configPlugins = config('plugins.'.$language, [], true);
+        $configPlugins = config('plugins.' . $language, [], true);
         $plugins = [];
         foreach ($configPlugins as $configPlugin) {
             $plugins[] = new $configPlugin($language);

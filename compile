@@ -1,9 +1,12 @@
 <?php
 
 use App\Console;
+use App\Console\Output;
+
+define('COMPILER_ROOT', __DIR__);
+
 require './vendor/autoload.php';
 
-//define('BASEDIR', __DIR__);
 
 $app = new Console;
 $app->run();

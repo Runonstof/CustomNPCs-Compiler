@@ -8,14 +8,19 @@ class GuiLabel extends GuiComponent
 
     public function renderJs()
     {
-        $js = $this->getRenderVar('var ', ' = ') . 'gui.addLabel(id(' . $this->getRenderId() . '), ' .
-            ($this->text ?: '\'\'') . ', ' .
-            $this->getCanvasX() . ', ' .
-            $this->getCanvasY() . ', ' .
-            $this->style->get('width', 0) . ', ' .
-            $this->style->get('height', 0) .
+        $text = $this->attributes->get('text', '');
+        $defaultWidth = strlen($text) * 10;
+        $js = 'var _component = gui.addLabel(id(' . $this->getRenderId() . '), ' .
+            ($text ?: '\'\'') . ', ' .
+            $this->getRenderX() . ', ' .
+            $this->getRenderY() . ', ' .
+            $this->attributes->get('width', $defaultWidth, true) . ', ' .
+            $this->attributes->get('height', 16, true) .
             ');';
-
+        if ($this->attributes->has('hover-text')) {
+            $js .= "\n" . '_component.setHoverText(' . $this->attributes->get('hover-text') . ')';
+        }
+        $js .= "\nreturn _component;";
         return $js;
     }
 }

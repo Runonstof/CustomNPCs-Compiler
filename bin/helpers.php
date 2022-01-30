@@ -131,3 +131,7 @@ function array_value_last($array)
 {
     return empty($array) ? null : $array[array_key_last($array)];
 }
+
+// function fix_path($path) {
+//     return str_replace()
+// }
